@@ -21,7 +21,7 @@ if (!$user) {
 $db = getDbConnection();
 
 if ($method === 'GET') {
-    $stmt = $db->prepare("SELECT username, photo_url, first_name, last_name FROM users WHERE id = ?");
+    $stmt = $db->prepare("SELECT id, role, username, photo_url, first_name, last_name FROM users WHERE id = ?");
     $stmt->execute([$user['id']]);
     echo json_encode($stmt->fetch());
     exit;

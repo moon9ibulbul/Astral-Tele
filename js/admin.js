@@ -50,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         loadComics();
+        loadComicSelects();
+        loadChapters();
 
         // Event Listeners for Selects
         document.getElementById('chapterComicSelect').addEventListener('change', (e) => {
@@ -229,41 +231,92 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function loadChapters(comicId) {
-        if(!comicId) return;
-        fetch(`/api/chapters.php?comic_id=${comicId}`, { headers })
+
+    let currentAdminChapterPage = 1;
+    let currentAdminChapterSearch = '';
+    let currentAdminChapterComicId = '';
+
+    const chapterSearchInput = document.getElementById('adminChapterSearch');
+    if (chapterSearchInput) {
+        chapterSearchInput.addEventListener('input', (e) => {
+            currentAdminChapterSearch = e.target.value;
+            currentAdminChapterComicId = ''; // Reset select filter when typing search
+            document.getElementById('chapterComicSelect').value = '';
+            currentAdminChapterPage = 1;
+            loadChapters();
+        });
+    }
+
+    function loadChapters(comicId = null) {
+        if (comicId !== null) {
+            currentAdminChapterComicId = comicId;
+            currentAdminChapterSearch = ''; // Reset search text when selecting via dropdown
+            if (chapterSearchInput) chapterSearchInput.value = '';
+            currentAdminChapterPage = 1;
+        }
+
+        let url = `/api/chapters.php?limit=10&page=${currentAdminChapterPage}`;
+        if (currentAdminChapterComicId) {
+            url += `&comic_id=${currentAdminChapterComicId}`;
+        } else if (currentAdminChapterSearch) {
+            url += `&search=${encodeURIComponent(currentAdminChapterSearch)}`;
+        }
+
+        fetch(url, { headers })
             .then(res => res.json())
-            .then(chapters => {
+            .then(data => {
                 const list = document.getElementById('adminChaptersList');
-                if(chapters.length === 0) {
+                // Use data.data to support unified format (whether paginated or not)
+                const chapters = data.data || data || [];
+
+                if (chapters.length === 0) {
                     list.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-gray-500">No chapters found.</td></tr>';
-                    return;
+                } else {
+                    list.innerHTML = chapters.map(c => {
+                        const comicTitlePart = c.comic_title ? `<br><span class="text-xs text-gray-500">${escapeHTML(c.comic_title)}</span>` : '';
+                        return `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3">${c.id}</td>
+                            <td class="p-3">${c.chapter_number}${comicTitlePart}</td>
+                            <td class="p-3">${escapeHTML(c.title || '-')}</td>
+                            <td class="p-3 truncate max-w-xs">${escapeHTML(c.pdf_url || '')}</td>
+                            <td class="p-3 space-x-2">
+                                <button class="text-red-600 hover:underline text-sm" onclick="deleteChapter(${c.id}, ${c.comic_id})">Delete</button>
+                            </td>
+                        </tr>
+                        `;
+                    }).join('');
                 }
-                list.innerHTML = chapters.map(c => `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-3">${c.id}</td>
-                        <td class="p-3">${c.chapter_number}</td>
-                        <td class="p-3">${c.title || '-'}</td>
-                        <td class="p-3 truncate max-w-xs">${c.pdf_url}</td>
-                        <td class="p-3 space-x-2">
-                            <button class="text-red-600 hover:underline text-sm" onclick="deleteChapter(${c.id}, ${comicId})">Delete</button>
-                        </td>
-                    </tr>
-                `).join('');
+
+                renderAdminChapterPagination(data.totalPages || 1);
             });
     }
 
-    window.deleteChapter = function(id, comicId) {
-        if(confirm("Are you sure you want to delete this chapter?")) {
-            fetch(`/api/chapters.php?id=${id}`, { method: 'DELETE', headers })
-                .then(res => res.json())
-                .then(data => {
-                    if(data.success) loadChapters(comicId);
-                });
+    function renderAdminChapterPagination(totalPages) {
+        const controls = document.getElementById('adminChapterPagination');
+        if (!controls) return;
+        if (totalPages <= 1) {
+            controls.innerHTML = '';
+            return;
         }
+
+        let html = '';
+        if (currentAdminChapterPage > 1) {
+            html += `<button onclick="changeAdminChapterPage(${currentAdminChapterPage - 1})" class="px-3 py-1 border rounded bg-white">Prev</button>`;
+        }
+        html += `<span class="px-3 py-1 font-bold">${currentAdminChapterPage} / ${totalPages}</span>`;
+        if (currentAdminChapterPage < totalPages) {
+            html += `<button onclick="changeAdminChapterPage(${currentAdminChapterPage + 1})" class="px-3 py-1 border rounded bg-white">Next</button>`;
+        }
+        controls.innerHTML = html;
     }
 
-    function loadReviews(comicId) {
+    window.changeAdminChapterPage = function(page) {
+        currentAdminChapterPage = page;
+        // Keep existing filters (ID or search) and reload
+        loadChapters(null);
+    };
+function loadReviews(comicId) {
         if(!comicId) return;
         // In a real app, admin endpoint should fetch ALL reviews including hidden/spam.
         // Our GET endpoint currently filters by active. We'd need an admin-specific fetch.

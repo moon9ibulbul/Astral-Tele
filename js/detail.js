@@ -69,7 +69,29 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('comicYear').innerText = comic.year || '-';
             document.getElementById('comicStatus').innerText = comic.status || '-';
             document.getElementById('comicViews').innerText = comic.views || '0';
-                document.getElementById('comicSynopsis').innerText = comic.synopsis || 'No synopsis available.';
+
+                const synopsisEl = document.getElementById('comicSynopsis');
+                synopsisEl.innerText = comic.synopsis || 'No synopsis available.';
+
+                // Logic to detect if we need "View More"
+                // Check after render if the text is truncated by line-clamp
+                setTimeout(() => {
+                    const isTruncated = synopsisEl.scrollHeight > synopsisEl.clientHeight;
+                    const viewMoreBtn = document.getElementById('viewMoreBtn');
+                    if (isTruncated && viewMoreBtn) {
+                        viewMoreBtn.classList.remove('hidden');
+                        viewMoreBtn.addEventListener('click', () => {
+                            if (synopsisEl.classList.contains('line-clamp-3')) {
+                                synopsisEl.classList.remove('line-clamp-3');
+                                viewMoreBtn.innerText = 'View Less';
+                            } else {
+                                synopsisEl.classList.add('line-clamp-3');
+                                viewMoreBtn.innerText = 'View More';
+                            }
+                        });
+                    }
+                }, 50);
+
                 
                 const thumb = document.getElementById('comicThumb');
                 if (comic.thumbnail_url) {
@@ -129,7 +151,10 @@ document.addEventListener('DOMContentLoaded', () => {
     Promise.all([
         fetch(`/api/chapters.php?comic_id=${comicId}`).then(res => res.json()),
         fetch(`/api/history.php?comic_id=${comicId}`, { headers }).then(res => res.ok ? res.json() : {data: []})
-    ]).then(([chapters, historyData]) => {
+    ]).then(([chaptersResponse, historyData]) => {
+            // Adjust for new object response structure if needed
+            const chapters = chaptersResponse.data || chaptersResponse || [];
+
             const readChapterIds = historyData.data || [];
             const list = document.getElementById('chapterList');
             if (chapters.length === 0) {
@@ -174,6 +199,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
+    let currentUserId = null;
+
+    // Attempt to get user ID
+    fetch('/api/profile.php', {
+        headers: (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) ?
+        {'Authorization': `Bearer ${window.Telegram.WebApp.initData}`} : {}
+    })
+    .then(res => res.ok ? res.json() : {})
+    .then(data => {
+        if(data.id) currentUserId = data.id;
+    }).catch(() => {});
+
     const submitReviewBtn = document.getElementById('submitReviewBtn');
     if (submitReviewBtn) {
         submitReviewBtn.addEventListener('click', () => {
@@ -206,6 +244,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         loadReviews();
                     } else {
                         alert(data.error || 'Failed to submit review. Ensure you are authenticated.');
+                        if (data.error && data.error.includes('already reviewed')) {
+                            const submitSection = document.getElementById('submitReviewBtn')?.closest('.bg-white');
+                            if(submitSection) submitSection.style.display = 'none';
+                        }
                     }
                 });
         });
@@ -251,46 +293,61 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
+
     function loadReviews() {
         fetch(`/api/reviews.php?comic_id=${comicId}`)
             .then(res => res.json())
             .then(threads => {
                 const list = document.getElementById('reviewsList');
+                let hasReviewed = false;
+
                 if (threads.length === 0) {
                     list.innerHTML = '<p class="text-sm text-gray-500">No reviews yet. Be the first!</p>';
-                    return;
-                }
-
-                list.innerHTML = threads.map(thread => `
-                    <div class="bg-white border rounded-lg p-3">
-                        <div class="flex items-center gap-2 mb-2">
-                            <img src="${thread.photo_url || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full">
-                            <div>
-                                <p class="text-sm font-bold">${escapeHTML(thread.username || 'Anonymous')}</p>
-                                <p class="text-xs text-gray-500">${new Date(thread.created_at).toLocaleString()}</p>
-                            </div>
-                            ${thread.rating ? `<div class="ml-auto text-yellow-500 text-sm">★ ${escapeHTML(thread.rating)}</div>` : ''}
-                        </div>
-                        <p class="text-sm text-gray-800 whitespace-pre-wrap">${escapeHTML(thread.content)}</p>
-                        ${thread.image_url ? `<img src="${escapeHTML(thread.image_url)}" class="mt-2 max-w-full h-auto rounded border">` : ''}
+                } else {
+                    list.innerHTML = threads.map(thread => {
+                        const isOwner = currentUserId && thread.user_id == currentUserId;
+                        if (isOwner) hasReviewed = true;
                         
-                        <div class="mt-2 flex gap-4 text-xs text-gray-500">
-                            <button class="hover:text-blue-600" onclick="voteReview(${thread.id}, 'like')">👍 ${thread.likes || 0}</button>
-                            <button class="hover:text-blue-600" onclick="voteReview(${thread.id}, 'dislike')">👎 ${thread.dislikes || 0}</button>
-                            <button class="hover:text-blue-600" onclick="document.getElementById('replyBox-${thread.id}').classList.toggle('hidden')">Reply</button>
-                        </div>
+                        const editedLabel = thread.created_at !== thread.updated_at ? '<span class="text-[10px] text-gray-400 ml-1">(Edited)</span>' : '';
 
-                        <!-- Replies -->
-                        <div class="ml-8 mt-3 space-y-2 border-l-2 pl-3">
-                            ${(thread.replies || []).map(reply => `
+                        return `
+                        <div class="bg-white border rounded-lg p-3">
+                            <div class="flex items-center gap-2 mb-2">
+                                <img src="${thread.photo_url || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full">
                                 <div>
-                                    <div class="flex items-center gap-2">
-                                        <p class="text-xs font-bold">${escapeHTML(reply.username || 'Anonymous')}</p>
-                                        <span class="text-xs text-gray-400">${new Date(reply.created_at).toLocaleString()}</span>
-                                    </div>
-                                    <p class="text-sm text-gray-700">${escapeHTML(reply.content)}</p>
+                                    <p class="text-sm font-bold">${escapeHTML(thread.username || 'Anonymous')}</p>
+                                    <p class="text-xs text-gray-500">${new Date(thread.created_at).toLocaleString()} ${editedLabel}</p>
                                 </div>
-                            `).join('')}
+                                ${thread.rating ? `<div class="ml-auto text-yellow-500 text-sm">★ ${escapeHTML(thread.rating)}</div>` : ''}
+                            </div>
+                            <p class="text-sm text-gray-800 whitespace-pre-wrap">${escapeHTML(thread.content)}</p>
+                            ${thread.image_url ? `<img src="${thread.image_url}" class="mt-2 max-w-full rounded h-32 object-cover">` : ''}
+
+                            <div class="flex gap-4 mt-3 text-xs text-gray-500">
+                                <button class="hover:text-blue-600" onclick="voteReview(${thread.id}, 'like')">👍 ${thread.likes || 0}</button>
+                                <button class="hover:text-blue-600" onclick="voteReview(${thread.id}, 'dislike')">👎 ${thread.dislikes || 0}</button>
+                                <button class="hover:text-blue-600" onclick="document.getElementById('replyBox-${thread.id}').classList.toggle('hidden')">Reply</button>
+                                ${isOwner ? `<button class="hover:text-blue-600 text-blue-500 font-medium" onclick="editReview(${thread.id}, '${encodeURIComponent(thread.content)}', '${thread.rating || ''}')">Edit</button>` : ''}
+                            </div>
+
+                            <!-- Replies -->
+                            ${(thread.replies || []).map(r => {
+                                const isReplyOwner = currentUserId && r.user_id == currentUserId;
+                                const replyEdited = r.created_at !== r.updated_at ? '<span class="text-[10px] text-gray-400 ml-1">(Edited)</span>' : '';
+                                return `
+                                <div class="ml-6 mt-3 border-l-2 pl-3">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <img src="${r.photo_url || 'https://via.placeholder.com/24'}" class="w-6 h-6 rounded-full">
+                                        <p class="text-xs font-bold">${escapeHTML(r.username || 'Anonymous')}</p>
+                                        <p class="text-[10px] text-gray-500">${new Date(r.created_at).toLocaleString()} ${replyEdited}</p>
+                                    </div>
+                                    <p class="text-sm text-gray-700">${escapeHTML(r.content)}</p>
+                                    <div class="flex gap-4 mt-1 text-[10px] text-gray-500">
+                                        ${isReplyOwner ? `<button class="hover:text-blue-600 text-blue-500" onclick="editReview(${r.id}, '${encodeURIComponent(r.content)}', '')">Edit</button>` : ''}
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
                             
                             <!-- Reply Input -->
                             <div id="replyBox-${thread.id}" class="hidden mt-2 flex gap-2">
@@ -299,7 +356,59 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                     </div>
-                `).join('');
+                    `;
+                    }).join('');
+                }
+
+                // Hide main review form if already reviewed
+                const submitSection = document.getElementById('submitReviewBtn')?.closest('.bg-white');
+                if (submitSection) {
+                    if (hasReviewed) {
+                        submitSection.style.display = 'none';
+                    } else {
+                        submitSection.style.display = 'block';
+                    }
+                }
+            });
+    }
+
+    window.editReview = function(id, encodedContent, currentRating) {
+        const content = decodeURIComponent(encodedContent);
+        const newContent = prompt("Edit your review/comment:", content);
+        if (newContent === null) return; // User cancelled
+        if (!newContent.trim()) {
+            alert("Content cannot be empty.");
+            return;
+        }
+
+        let newRating = currentRating;
+        // If it's a top-level review (has rating or allowed to have rating)
+        if (currentRating !== '') {
+            const promptRating = prompt("Edit your rating (1-5):", currentRating);
+            if (promptRating !== null) {
+                const r = parseInt(promptRating);
+                if (r >= 1 && r <= 5) newRating = r;
+            }
+        }
+
+        const fd = new FormData();
+        fd.append('action', 'edit');
+        fd.append('review_id', id);
+        fd.append('content', newContent);
+        if (newRating) fd.append('rating', newRating);
+
+        const headers = {};
+        const tg = window.Telegram && window.Telegram.WebApp;
+        if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+
+        fetch('/api/reviews.php', { method: 'POST', headers, body: fd })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    loadReviews();
+                } else {
+                    alert(data.error || 'Failed to edit.');
+                }
             });
     }
 });

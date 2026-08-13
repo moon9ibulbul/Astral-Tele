@@ -197,4 +197,59 @@ document.addEventListener('DOMContentLoaded', () => {
         loadComics();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    // Popular Post Logic
+    if (document.getElementById('popularGrid')) {
+        let currentPopularPeriod = 'today';
+
+        function loadPopularPosts() {
+            const grid = document.getElementById('popularGrid');
+            grid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-10">Loading popular posts...</p>';
+
+            fetch(`/api/popular.php?period=${currentPopularPeriod}`)
+                .then(res => res.json())
+                .then(data => {
+                    const comics = data.data || [];
+                    if (comics.length === 0) {
+                        grid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-10">No popular posts found.</p>';
+                        return;
+                    }
+
+                    grid.innerHTML = comics.map(comic => `
+                        <div class="bg-white rounded-lg shadow overflow-hidden flex cursor-pointer hover:bg-gray-50" onclick="window.location.href='detail.html?id=${comic.id}'">
+                            <div class="w-2/5 aspect-[16/9] bg-gray-200 shrink-0">
+                                <img src="${comic.thumbnail_url || 'https://via.placeholder.com/300x168?text=No+Image'}" alt="${comic.title}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="p-3 flex-1 flex flex-col justify-center">
+                                <h3 class="font-bold text-sm line-clamp-2">${escapeHTML(comic.title)}</h3>
+                            </div>
+                        </div>
+                    `).join('');
+                })
+                .catch(err => {
+                    console.error("Error loading popular posts", err);
+                    grid.innerHTML = '<p class="col-span-full text-center text-red-500 py-10">Failed to load popular posts.</p>';
+                });
+        }
+
+        // Handle pill clicks
+        document.querySelectorAll('.popular-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.popular-btn').forEach(b => {
+                    b.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+                    b.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                });
+
+                e.target.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                e.target.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+
+                currentPopularPeriod = e.target.getAttribute('data-period');
+                loadPopularPosts();
+            });
+        });
+
+        // Initial load
+        loadPopularPosts();
+    }
+
 });

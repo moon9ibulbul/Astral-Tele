@@ -1,82 +1,46 @@
-[Thu Aug 13 15:39:07 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
-[Thu Aug 13 15:39:28 2026] [::1]:59042 Accepted
-[Thu Aug 13 15:39:28 2026] [::1]:59042 [200]: GET /index.html
-[Thu Aug 13 15:39:28 2026] [::1]:59042 Closing
-[Thu Aug 13 15:39:28 2026] [::1]:59048 Accepted
-[Thu Aug 13 15:39:28 2026] [::1]:59062 Accepted
-[Thu Aug 13 15:39:28 2026] [::1]:59048 [200]: GET /js/notification_bell.js
-[Thu Aug 13 15:39:28 2026] [::1]:59062 [200]: GET /js/app.js
-[Thu Aug 13 15:39:28 2026] [::1]:59048 Closing
-[Thu Aug 13 15:39:28 2026] [::1]:59062 Closing
-[Thu Aug 13 15:39:29 2026] [::1]:59074 Accepted
-[Thu Aug 13 15:39:29 2026] [::1]:59084 Accepted
-[Thu Aug 13 15:39:29 2026] [::1]:59094 Accepted
-[Thu Aug 13 15:39:29 2026] [::1]:59074 [200]: GET /api/notifications.php?action=count
-[Thu Aug 13 15:39:29 2026] [::1]:59074 Closing
-[Thu Aug 13 15:39:29 2026] [::1]:59084 [200]: GET /api/categories.php
-[Thu Aug 13 15:39:29 2026] [::1]:59084 Closing
-[Thu Aug 13 15:39:29 2026] [::1]:59094 [200]: GET /api/comics.php?page=1&limit=10
-[Thu Aug 13 15:39:29 2026] [::1]:59094 Closing
-[Thu Aug 13 15:39:31 2026] [::1]:59110 Accepted
-[Thu Aug 13 15:39:31 2026] [::1]:59110 [200]: GET /detail.html?id=2
-[Thu Aug 13 15:39:31 2026] [::1]:59110 Closing
-[Thu Aug 13 15:39:31 2026] [::1]:59118 Accepted
-[Thu Aug 13 15:39:31 2026] [::1]:59120 Accepted
-[Thu Aug 13 15:39:31 2026] [::1]:59134 Accepted
-[Thu Aug 13 15:39:31 2026] [::1]:59118 [200]: GET /js/detail.js
-[Thu Aug 13 15:39:31 2026] [::1]:59120 [200]: GET /js/notification_bell.js
-[Thu Aug 13 15:39:31 2026] [::1]:59134 [200]: GET /js/app.js
-[Thu Aug 13 15:39:31 2026] [::1]:59118 Closing
-[Thu Aug 13 15:39:31 2026] [::1]:59120 Closing
-[Thu Aug 13 15:39:31 2026] [::1]:59134 Closing
-[Thu Aug 13 15:39:31 2026] [::1]:59144 Accepted
-[Thu Aug 13 15:39:31 2026] [::1]:59146 Accepted
-[Thu Aug 13 15:39:31 2026] [::1]:59152 Accepted
-[Thu Aug 13 15:39:31 2026] [::1]:59158 Accepted
-[Thu Aug 13 15:39:31 2026] [::1]:59160 Accepted
-[Thu Aug 13 15:39:31 2026] [::1]:59162 Accepted
-[Thu Aug 13 15:39:31 2026] [::1]:59144 [200]: GET /api/notifications.php?action=count
-[Thu Aug 13 15:39:31 2026] [::1]:59144 Closing
-[Thu Aug 13 15:39:31 2026] [::1]:59146 [200]: GET /api/comics.php?id=2
-[Thu Aug 13 15:39:31 2026] [::1]:59146 Closing
-[Thu Aug 13 15:39:31 2026] [::1]:59152 [200]: GET /api/bookmarks.php?comic_id=2
-[Thu Aug 13 15:39:31 2026] [::1]:59152 Closing
-[Thu Aug 13 15:39:31 2026] [::1]:59158 [200]: GET /api/chapters.php?comic_id=2
-[Thu Aug 13 15:39:31 2026] [::1]:59158 Closing
-[Thu Aug 13 15:39:31 2026] [::1]:59160 [200]: GET /api/history.php?comic_id=2
-[Thu Aug 13 15:39:31 2026] [::1]:59160 Closing
-[Thu Aug 13 15:39:31 2026] [::1]:59162 [200]: GET /api/reviews.php?comic_id=2
-[Thu Aug 13 15:39:31 2026] [::1]:59162 Closing
-[Thu Aug 13 15:39:33 2026] [::1]:59170 Accepted
-[Thu Aug 13 15:39:33 2026] [::1]:59170 [200]: POST /api/reviews.php
-[Thu Aug 13 15:39:33 2026] [::1]:59170 Closing
-[Thu Aug 13 15:39:33 2026] [::1]:59184 Accepted
-[Thu Aug 13 15:39:33 2026] [::1]:59184 [200]: GET /api/reviews.php?comic_id=2
-[Thu Aug 13 15:39:33 2026] [::1]:59184 Closing
-[Thu Aug 13 15:39:35 2026] [::1]:59190 Accepted
-[Thu Aug 13 15:39:35 2026] [::1]:59190 [200]: GET /library.html
-[Thu Aug 13 15:39:35 2026] [::1]:59190 Closing
-[Thu Aug 13 15:39:35 2026] [::1]:59196 Accepted
-[Thu Aug 13 15:39:35 2026] [::1]:59200 Accepted
-[Thu Aug 13 15:39:35 2026] [::1]:59196 [200]: GET /js/library.js
-[Thu Aug 13 15:39:35 2026] [::1]:59200 [200]: GET /js/notification_bell.js
-[Thu Aug 13 15:39:35 2026] [::1]:59196 Closing
-[Thu Aug 13 15:39:35 2026] [::1]:59200 Closing
-[Thu Aug 13 15:39:35 2026] [::1]:59214 Accepted
-[Thu Aug 13 15:39:35 2026] [::1]:59214 [200]: GET /api/notifications.php?action=count
-[Thu Aug 13 15:39:35 2026] [::1]:59214 Closing
-[Thu Aug 13 15:39:35 2026] [::1]:59216 Accepted
-[Thu Aug 13 15:39:35 2026] [::1]:59216 [200]: GET /api/library.php?tab=history&page=1
-[Thu Aug 13 15:39:35 2026] [::1]:59216 Closing
-[Thu Aug 13 15:39:36 2026] [::1]:56712 Accepted
-[Thu Aug 13 15:39:36 2026] [::1]:56712 [200]: GET /api/library.php?tab=bookmarks&page=1
-[Thu Aug 13 15:39:36 2026] [::1]:56712 Closing
-[Thu Aug 13 15:39:37 2026] [::1]:56714 Accepted
-[Thu Aug 13 15:39:37 2026] [::1]:56714 [200]: GET /notifications.html
-[Thu Aug 13 15:39:37 2026] [::1]:56714 Closing
-[Thu Aug 13 15:39:37 2026] [::1]:56718 Accepted
-[Thu Aug 13 15:39:37 2026] [::1]:56718 [200]: GET /js/notifications.js
-[Thu Aug 13 15:39:37 2026] [::1]:56718 Closing
-[Thu Aug 13 15:39:37 2026] [::1]:56726 Accepted
-[Thu Aug 13 15:39:37 2026] [::1]:56726 [200]: GET /api/notifications.php?action=list
-[Thu Aug 13 15:39:37 2026] [::1]:56726 Closing
+[Thu Aug 13 20:42:58 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
+[Thu Aug 13 20:43:26 2026] [::1]:46408 Accepted
+[Thu Aug 13 20:43:26 2026] [::1]:46408 [200]: GET /detail.html?id=1
+[Thu Aug 13 20:43:26 2026] [::1]:46408 Closing
+[Thu Aug 13 20:43:26 2026] [::1]:46424 Accepted
+[Thu Aug 13 20:43:26 2026] [::1]:46430 Accepted
+[Thu Aug 13 20:43:26 2026] [::1]:46440 Accepted
+[Thu Aug 13 20:43:26 2026] [::1]:46424 [200]: GET /js/notification_bell.js
+[Thu Aug 13 20:43:26 2026] [::1]:46430 [200]: GET /js/app.js
+[Thu Aug 13 20:43:26 2026] [::1]:46424 Closing
+[Thu Aug 13 20:43:26 2026] [::1]:46440 [200]: GET /js/detail.js
+[Thu Aug 13 20:43:26 2026] [::1]:46430 Closing
+[Thu Aug 13 20:43:26 2026] [::1]:46440 Closing
+[Thu Aug 13 20:43:27 2026] [::1]:46452 Accepted
+[Thu Aug 13 20:43:27 2026] [::1]:46460 Accepted
+[Thu Aug 13 20:43:27 2026] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'r.is_read' in 'WHERE' in /app/api/notifications.php:22
+Stack trace:
+#0 /app/api/notifications.php(22): PDO->prepare()
+#1 {main}
+  thrown in /app/api/notifications.php on line 22
+[Thu Aug 13 20:43:27 2026] [::1]:46452 [500]: GET /api/notifications.php?action=count - Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'r.is_read' in 'WHERE' in /app/api/notifications.php:22
+Stack trace:
+#0 /app/api/notifications.php(22): PDO->prepare()
+#1 {main}
+  thrown in /app/api/notifications.php on line 22
+[Thu Aug 13 20:43:27 2026] [::1]:46452 Closing
+[Thu Aug 13 20:43:27 2026] [::1]:46464 Accepted
+[Thu Aug 13 20:43:27 2026] [::1]:46460 [200]: GET /api/profile.php
+[Thu Aug 13 20:43:27 2026] [::1]:46460 Closing
+[Thu Aug 13 20:43:27 2026] [::1]:46466 Accepted
+[Thu Aug 13 20:43:27 2026] [::1]:46464 [200]: GET /api/comics.php?id=1
+[Thu Aug 13 20:43:27 2026] [::1]:46464 Closing
+[Thu Aug 13 20:43:27 2026] [::1]:46482 Accepted
+[Thu Aug 13 20:43:27 2026] [::1]:46466 [200]: GET /api/bookmarks.php?comic_id=1
+[Thu Aug 13 20:43:27 2026] [::1]:46466 Closing
+[Thu Aug 13 20:43:27 2026] [::1]:46488 Accepted
+[Thu Aug 13 20:43:27 2026] [::1]:46482 [200]: GET /api/chapters.php?comic_id=1
+[Thu Aug 13 20:43:27 2026] [::1]:46482 Closing
+[Thu Aug 13 20:43:27 2026] [::1]:46502 Accepted
+[Thu Aug 13 20:43:27 2026] [::1]:46488 [200]: GET /api/history.php?comic_id=1
+[Thu Aug 13 20:43:27 2026] [::1]:46488 Closing
+[Thu Aug 13 20:43:27 2026] [::1]:46506 Accepted
+[Thu Aug 13 20:43:27 2026] [::1]:46502 [200]: GET /api/reviews.php?comic_id=1
+[Thu Aug 13 20:43:27 2026] [::1]:46502 Closing
+[Thu Aug 13 20:43:27 2026] [::1]:46506 [200]: GET /api/profile.php
+[Thu Aug 13 20:43:27 2026] [::1]:46506 Closing
