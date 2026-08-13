@@ -268,12 +268,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
+                function getRankHtml(role, pts) {
+                    pts = parseInt(pts) || 0;
+                    if (role === 'admin') {
+                        return '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">Admin</span>';
+                    }
+                    if (pts > 2500) {
+                        return '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white shadow-sm">Aeon</span>';
+                    } else if (pts >= 1000) {
+                        return '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">Emanator</span>';
+                    } else if (pts >= 501) {
+                        return '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-yellow-50 text-yellow-600 border border-yellow-200">The Nameless</span>';
+                    } else if (pts >= 251) {
+                        return '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">Passenger</span>';
+                    } else if (pts >= 101) {
+                        return '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">Pathstrider</span>';
+                    } else {
+                        return '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-800 border border-gray-300">NPC</span>';
+                    }
+                }
+
                 list.innerHTML = threads.map(thread => `
                     <div class="bg-white border rounded-lg p-3 text-sm">
                         <div class="flex items-center gap-2 mb-2">
                             <img src="${thread.photo_url || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full">
                             <div>
-                                <p class="font-bold">${escapeHTML(thread.username || 'Anonymous')}</p>
+                                <div class="flex items-center gap-1.5">
+                                    <p class="text-sm font-bold">${escapeHTML(thread.username || 'Anonymous')}</p>
+                                    ${getRankHtml(thread.role, thread.pts)}
+                                </div>
                                 <p class="text-xs text-gray-500">${new Date(thread.created_at).toLocaleString()}</p>
                             </div>
                         </div>
