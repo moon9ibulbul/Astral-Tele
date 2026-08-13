@@ -50,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        initBackupUpdateTab();
+
         loadComics();
         loadComicSelects();
         loadChapters();
@@ -534,6 +536,172 @@ function loadReviews(comicId) {
                 }
             });
     });
+
+    // Backup & Update Tab Logic
+    function initBackupUpdateTab() {
+        const backupBtn = document.getElementById('backupDbBtn');
+        const restoreForm = document.getElementById('restoreDbForm');
+        const restoreStatus = document.getElementById('restoreStatus');
+        const checkUpdateBtn = document.getElementById('checkUpdateBtn');
+        const applyUpdateBtn = document.getElementById('applyUpdateBtn');
+
+        if (backupBtn) {
+            backupBtn.addEventListener('click', () => {
+                backupBtn.disabled = true;
+                backupBtn.innerHTML = 'Generating Backup...';
+
+                fetch('/api/backup.php?action=backup', { headers })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Backup failed');
+                        return res.blob();
+                    })
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `backup_${new Date().toISOString().slice(0,10)}.sql`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(err => alert(err.message))
+                    .finally(() => {
+                        backupBtn.disabled = false;
+                        backupBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Download Backup`;
+                    });
+            });
+        }
+
+        if (restoreForm) {
+            restoreForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const fileInput = document.getElementById('restoreFileInput');
+                if (!fileInput.files.length) return;
+
+                if (!confirm("WARNING: Restoring a database backup will OVERWRITE all current data. Are you sure you want to proceed?")) {
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('backup_file', fileInput.files[0]);
+
+                restoreStatus.classList.remove('hidden', 'text-green-600', 'text-red-600');
+                restoreStatus.classList.add('text-blue-600');
+                restoreStatus.innerText = 'Restoring database... please wait.';
+
+                fetch('/api/backup.php?action=restore', {
+                    method: 'POST',
+                    headers: headers, // Do NOT set Content-Type, fetch handles multipart/form-data boundary automatically
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        restoreStatus.classList.replace('text-blue-600', 'text-green-600');
+                        restoreStatus.innerText = data.message || 'Database restored successfully.';
+                        fileInput.value = '';
+                    } else {
+                        throw new Error(data.error || 'Restore failed.');
+                    }
+                })
+                .catch(err => {
+                    restoreStatus.classList.replace('text-blue-600', 'text-red-600');
+                    restoreStatus.innerText = err.message;
+                });
+            });
+        }
+
+        if (checkUpdateBtn) {
+            checkUpdateBtn.addEventListener('click', () => {
+                const statusContainer = document.getElementById('updateStatusContainer');
+                const infoContainer = document.getElementById('updateInfoContainer');
+                const btnOriginalText = checkUpdateBtn.innerHTML;
+
+                checkUpdateBtn.disabled = true;
+                checkUpdateBtn.innerHTML = 'Checking...';
+                statusContainer.innerHTML = '<p class="text-blue-500">Checking for updates with GitHub...</p>';
+                statusContainer.classList.remove('hidden');
+                infoContainer.classList.add('hidden');
+
+                fetch('/api/update.php?action=check', { headers })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) throw new Error(data.error);
+
+                        if (!data.update_available) {
+                            statusContainer.innerHTML = `
+                                <div class="text-green-600 mb-2">
+                                    <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <h3 class="text-lg font-bold text-gray-800">System is Up to Date!</h3>
+                                <p class="text-sm text-gray-500 mt-1">Current version: <span class="font-mono text-xs">${data.current_version.substring(0,7)}</span></p>
+                            `;
+                        } else {
+                            statusContainer.classList.add('hidden');
+                            infoContainer.classList.remove('hidden');
+
+                            document.getElementById('versionInfo').innerHTML = `
+                                Current: <span class="font-mono">${data.current_version.substring(0,7)}</span> &rarr;
+                                Latest: <span class="font-mono font-bold">${data.latest_version.substring(0,7)}</span>
+                                <br>${data.files_changed} file(s) changed.
+                            `;
+
+                            const changelogList = document.getElementById('changelogList');
+                            if (data.changelog && data.changelog.length > 0) {
+                                changelogList.innerHTML = data.changelog.map(c => `
+                                    <div class="mb-3 last:mb-0 border-b last:border-0 pb-2 last:pb-0">
+                                        <p class="font-semibold text-sm">${escapeHTML(c.message)}</p>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            By ${escapeHTML(c.author)} on ${new Date(c.date).toLocaleDateString()}
+                                            (<span class="font-mono">${c.sha.substring(0,7)}</span>)
+                                        </p>
+                                    </div>
+                                `).join('');
+                            } else {
+                                changelogList.innerHTML = '<p class="text-sm text-gray-500">No changelog available.</p>';
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        statusContainer.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
+                    })
+                    .finally(() => {
+                        checkUpdateBtn.disabled = false;
+                        checkUpdateBtn.innerHTML = btnOriginalText;
+                    });
+            });
+        }
+
+        if (applyUpdateBtn) {
+            applyUpdateBtn.addEventListener('click', () => {
+                if (!confirm("Are you sure you want to apply this update? It is recommended to backup your database first.")) return;
+
+                const originalText = applyUpdateBtn.innerText;
+                applyUpdateBtn.disabled = true;
+                applyUpdateBtn.innerText = 'Updating... Please wait';
+
+                fetch('/api/update.php?action=update', {
+                    method: 'POST',
+                    headers: headers
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message + "\nThe page will now reload.");
+                        window.location.reload();
+                    } else {
+                        throw new Error(data.error + (data.details ? '\n' + data.details.join('\n') : ''));
+                    }
+                })
+                .catch(err => {
+                    alert("Update failed:\n" + err.message);
+                    applyUpdateBtn.disabled = false;
+                    applyUpdateBtn.innerText = originalText;
+                });
+            });
+        }
+    }
 
 });
 function escapeHTML(str) {

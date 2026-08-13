@@ -24,6 +24,7 @@
                 <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-700 active-tab bg-gray-700" data-target="comicsTab">Comics</button>
                 <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-700" data-target="chaptersTab">Chapters</button>
                 <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-700" data-target="commentsTab">Comments & Reviews</button>
+                <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-700" data-target="backupUpdateTab">Backup & Update</button>
                 <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-700" data-target="categoriesTab">Categories</button>
             </nav>
             <div class="mt-auto text-xs text-gray-400">Astral-Tele Admin</div>
@@ -172,6 +173,67 @@
                             <tr><td colspan="4" class="p-3 text-center text-gray-500">Loading quests...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </section>
+
+            <!-- Backup & Update Tab -->
+            <section id="backupUpdateTab" class="tab-content hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold">Database Backup & Restore</h2>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6 mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-bold mb-2">Backup Database</h3>
+                            <p class="text-sm text-gray-600 mb-4">Download a complete SQL backup of your database. Keep this file safe.</p>
+                            <button id="backupDbBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Download Backup
+                            </button>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold mb-2">Restore Database</h3>
+                            <p class="text-sm text-gray-600 mb-4">Upload a previously generated SQL backup file to restore your database. <strong>Warning: This will overwrite current data!</strong></p>
+                            <form id="restoreDbForm" class="flex gap-2">
+                                <input type="file" id="restoreFileInput" accept=".sql" required class="flex-1 border rounded p-1.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm">Restore</button>
+                            </form>
+                            <p id="restoreStatus" class="text-sm mt-2 hidden"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6 flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">System Updates</h2>
+                    <button id="checkUpdateBtn" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Check for Updates
+                    </button>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div id="updateStatusContainer" class="text-center py-4">
+                        <p class="text-gray-500">Click "Check for Updates" to see if a newer version is available.</p>
+                    </div>
+
+                    <div id="updateInfoContainer" class="hidden">
+                        <div class="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-blue-800 font-bold">Update Available!</h3>
+                                    <p class="text-sm text-blue-600 mt-1">A new version is ready to be installed.</p>
+                                    <p class="text-xs text-blue-500 mt-2" id="versionInfo"></p>
+                                </div>
+                                <button id="applyUpdateBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow">
+                                    Apply Update Now
+                                </button>
+                            </div>
+                        </div>
+
+                        <h4 class="font-bold mb-2">Changelog</h4>
+                        <div class="bg-gray-50 border rounded p-3 max-h-60 overflow-y-auto" id="changelogList">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
