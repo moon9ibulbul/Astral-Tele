@@ -86,15 +86,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            list.innerHTML = chapters.map(ch => `
+            list.innerHTML = chapters.map(ch => {
+                let icons = '';
+                if (ch.is_adult == 1) icons += ' 🔞';
+                if (ch.has_password == 1) icons += ' 🔒';
+                if (ch.price > 0) icons += ' ⭐';
+
+                return `
                 <a href="reader.html?id=${ch.id}&comic_id=${comicId}" class="block bg-white border rounded-lg p-3 hover:bg-gray-50 transition flex justify-between items-center">
                     <div>
-                        <span class="font-bold text-sm">Chapter ${ch.chapter_number}</span>
+                        <span class="font-bold text-sm">Chapter ${ch.chapter_number}${icons}</span>
                         ${ch.title ? `<span class="text-xs text-gray-500 ml-2">- ${ch.title}</span>` : ''}
                     </div>
                     <span class="text-xs text-gray-400">${new Date(ch.created_at).toLocaleDateString()}</span>
                 </a>
-            `).join('');
+                `;
+            }).join('');
         });
 
     // Fetch Reviews

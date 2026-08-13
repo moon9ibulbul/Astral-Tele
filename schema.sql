@@ -42,9 +42,21 @@ CREATE TABLE IF NOT EXISTS `chapters` (
     `chapter_number` DECIMAL(6, 2) NOT NULL,
     `title` VARCHAR(255) NULL,
     `pdf_url` TEXT NOT NULL,
+    `is_adult` BOOLEAN DEFAULT FALSE,
+    `password` VARCHAR(255) NULL,
+    `price` INT DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`comic_id`) REFERENCES `comics`(`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS `unlocked_chapters` (
+    `user_id` BIGINT NOT NULL,
+    `chapter_id` INT NOT NULL,
+    `unlocked_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`user_id`, `chapter_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`chapter_id`) REFERENCES `chapters`(`id`) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS `reviews` (
