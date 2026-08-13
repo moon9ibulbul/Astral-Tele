@@ -15,6 +15,9 @@ if ($method === 'GET') {
         $stmt->execute([$_GET['id']]);
         $comic = $stmt->fetch();
         if ($comic) {
+            $catStmt = $db->prepare("SELECT c.id, c.name FROM categories c JOIN comic_categories cc ON c.id = cc.category_id WHERE cc.comic_id = ?");
+            $catStmt->execute([$comic['id']]);
+            $comic['categories'] = $catStmt->fetchAll();
             echo json_encode(['data' => [$comic]]); // Wrapping in array to match structure or just return obj
         } else {
             http_response_code(404);
@@ -32,32 +35,38 @@ if ($method === 'GET') {
 
     $where = [];
     $params = [];
+    $join = "";
 
     if ($search) {
-        $where[] = "title LIKE ?";
+        $where[] = "c.title LIKE ?";
         $params[] = "%$search%";
     }
     if ($category) {
-        $where[] = "category = ?";
+        $join = "JOIN comic_categories cc ON c.id = cc.comic_id JOIN categories cat ON cc.category_id = cat.id";
+        $where[] = "cat.name = ?";
         $params[] = $category;
     }
 
     $whereSql = count($where) > 0 ? "WHERE " . implode(' AND ', $where) : "";
 
-    $countStmt = $db->prepare("SELECT COUNT(*) FROM comics $whereSql");
+    $countStmt = $db->prepare("SELECT COUNT(DISTINCT c.id) FROM comics c $join $whereSql");
     $countStmt->execute($params);
     $total = $countStmt->fetchColumn();
 
-    $sql = "SELECT * FROM comics $whereSql ORDER BY id DESC LIMIT $limit OFFSET $offset";
+    $sql = "SELECT DISTINCT c.* FROM comics c $join $whereSql ORDER BY c.id DESC LIMIT $limit OFFSET $offset";
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     $comics = $stmt->fetchAll();
     
-    // Fetch latest 2 chapters for each comic
+    // Fetch latest 2 chapters and categories for each comic
     foreach ($comics as &$comic) {
         $chStmt = $db->prepare("SELECT id, chapter_number, title FROM chapters WHERE comic_id = ? ORDER BY chapter_number DESC LIMIT 2");
         $chStmt->execute([$comic['id']]);
         $comic['latest_chapters'] = $chStmt->fetchAll();
+
+        $catStmt = $db->prepare("SELECT cat.id, cat.name FROM categories cat JOIN comic_categories cc ON cat.id = cc.category_id WHERE cc.comic_id = ?");
+        $catStmt->execute([$comic['id']]);
+        $comic['categories'] = $catStmt->fetchAll();
     }
 
     echo json_encode([
@@ -84,7 +93,7 @@ if ($method === 'POST') {
     $artist = $_POST['artist'] ?? '';
     $publisher = $_POST['publisher'] ?? '';
     $synopsis = $_POST['synopsis'] ?? '';
-    $category = $_POST['category'] ?? '';
+    $categories = isset($_POST['categories']) ? explode(',', $_POST['categories']) : [];
 
     $thumbnailUrl = null;
     if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
@@ -93,10 +102,21 @@ if ($method === 'POST') {
         $thumbnailUrl = uploadToS3($tmpName, $fileName);
     }
 
-    $stmt = $db->prepare("INSERT INTO comics (title, alternative_title, author, artist, publisher, synopsis, category, thumbnail_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$title, $altTitle, $author, $artist, $publisher, $synopsis, $category, $thumbnailUrl]);
+    $stmt = $db->prepare("INSERT INTO comics (title, alternative_title, author, artist, publisher, synopsis, thumbnail_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$title, $altTitle, $author, $artist, $publisher, $synopsis, $thumbnailUrl]);
+    $comicId = $db->lastInsertId();
+
+    if (!empty($categories)) {
+        $catStmt = $db->prepare("INSERT INTO comic_categories (comic_id, category_id) VALUES (?, ?)");
+        foreach ($categories as $catId) {
+            $catId = (int)$catId;
+            if ($catId > 0) {
+                $catStmt->execute([$comicId, $catId]);
+            }
+        }
+    }
     
-    echo json_encode(['success' => true, 'id' => $db->lastInsertId()]);
+    echo json_encode(['success' => true, 'id' => $comicId]);
     exit;
 }
 
@@ -111,9 +131,25 @@ if ($method === 'PUT') {
     
     // Update basic text fields for simplicity (multipart/form-data with PUT is tricky in raw PHP)
     $title = $_PUT['title'] ?? '';
-    $category = $_PUT['category'] ?? '';
-    $stmt = $db->prepare("UPDATE comics SET title = ?, category = ? WHERE id = ?");
-    $stmt->execute([$title, $category, $id]);
+    $categories = isset($_PUT['categories']) ? explode(',', $_PUT['categories']) : [];
+
+    $stmt = $db->prepare("UPDATE comics SET title = ? WHERE id = ?");
+    $stmt->execute([$title, $id]);
+
+    // Delete existing categories
+    $delStmt = $db->prepare("DELETE FROM comic_categories WHERE comic_id = ?");
+    $delStmt->execute([$id]);
+
+    // Insert new categories
+    if (!empty($categories)) {
+        $catStmt = $db->prepare("INSERT INTO comic_categories (comic_id, category_id) VALUES (?, ?)");
+        foreach ($categories as $catId) {
+            $catId = (int)$catId;
+            if ($catId > 0) {
+                $catStmt->execute([$id, $catId]);
+            }
+        }
+    }
     
     echo json_encode(['success' => true]);
     exit;

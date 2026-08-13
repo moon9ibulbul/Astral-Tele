@@ -42,7 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.querySelectorAll('.tab-content').forEach(tab => {
                     tab.classList.add('hidden');
                 });
-                document.getElementById(e.target.getAttribute('data-target')).classList.remove('hidden');
+                const targetId = e.target.getAttribute('data-target');
+                document.getElementById(targetId).classList.remove('hidden');
+
+                if (targetId === 'categoriesTab') loadCategories();
             });
         });
 
@@ -59,26 +62,40 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add Comic
         document.getElementById('addComicBtn').addEventListener('click', () => {
             const title = prompt("Enter Comic Title:");
-            if(title) {
-                const fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.accept = 'image/*';
-                fileInput.onchange = e => {
-                    const file = e.target.files[0];
-                    if (!file) return;
+            if (!title) return;
+
+            fetch('/api/categories.php', { headers })
+                .then(res => res.json())
+                .then(catData => {
+                    const categories = catData.data || [];
+                    const catOptions = categories.map(c => `${c.id}: ${c.name}`).join('\n');
+                    const selectedCatsStr = prompt(`Enter category IDs separated by comma:\n\n${catOptions}`);
                     
-                    const fd = new FormData();
-                    fd.append('title', title);
-                    fd.append('thumbnail', file);
-                    fetch('/api/comics.php', { method: 'POST', headers, body: fd })
-                        .then(res => res.json())
-                        .then(data => {
-                            if(data.success) loadComics();
-                            else alert('Error: ' + data.error);
-                        });
-                };
-                fileInput.click();
-            }
+                    let selectedCats = [];
+                    if (selectedCatsStr) {
+                        selectedCats = selectedCatsStr.split(',').map(s => s.trim()).filter(s => s);
+                    }
+
+                    const fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = 'image/*';
+                    fileInput.onchange = e => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+
+                        const fd = new FormData();
+                        fd.append('title', title);
+                        if (selectedCats.length > 0) fd.append('categories', selectedCats.join(','));
+                        fd.append('thumbnail', file);
+                        fetch('/api/comics.php', { method: 'POST', headers, body: fd })
+                            .then(res => res.json())
+                            .then(data => {
+                                if(data.success) loadComics();
+                                else alert('Error: ' + data.error);
+                            });
+                    };
+                    fileInput.click();
+                });
         });
 
         // Add Chapter
@@ -124,40 +141,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('chapterComicSelect').innerHTML = options;
                 document.getElementById('reviewComicSelect').innerHTML = options;
 
-                list.innerHTML = comics.map(c => `
+                list.innerHTML = comics.map(c => {
+                    const catNames = (c.categories || []).map(cat => cat.name).join(', ') || '-';
+                    const catIds = (c.categories || []).map(cat => cat.id).join(', ');
+                    return `
                     <tr class="border-b hover:bg-gray-50">
                         <td class="p-3">${c.id}</td>
                         <td class="p-3"><img src="${c.thumbnail_url || ''}" class="w-10 h-14 object-cover bg-gray-200"></td>
-                        <td class="p-3">${c.title}</td>
-                        <td class="p-3">${c.category || '-'}</td>
+                        <td class="p-3">${escapeHTML(c.title)}</td>
+                        <td class="p-3">${escapeHTML(catNames)}</td>
                         <td class="p-3 space-x-2">
-                            <button class="text-blue-600 hover:underline text-sm" onclick="editComic(${c.id}, '${escapeHTML(c.title).replace(/'/g, "\\'")}', '${escapeHTML(c.category || '').replace(/'/g, "\\'")}')">Edit</button>
+                            <button class="text-blue-600 hover:underline text-sm" onclick="editComic(${c.id}, '${escapeHTML(c.title).replace(/'/g, "\\'")}', '${catIds}')">Edit</button>
                             <button class="text-red-600 hover:underline text-sm" onclick="deleteComic(${c.id})">Delete</button>
                         </td>
                     </tr>
-                `).join('');
+                `}).join('');
             });
     }
 
-    window.editComic = function(id, oldTitle, oldCategory) {
+    window.editComic = function(id, oldTitle, oldCatIds) {
         const title = prompt("Edit Title:", oldTitle);
         if (title === null) return;
-        const category = prompt("Edit Category:", oldCategory);
-        if (category === null) return;
 
-        // PUT request using URL encoding
-        fetch(`/api/comics.php?id=${id}`, {
-            method: 'PUT',
-            headers: {
-                ...headers,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `title=${encodeURIComponent(title)}&category=${encodeURIComponent(category)}`
-        }).then(res => res.json())
-          .then(data => {
-              if (data.success) loadComics();
-              else alert('Error updating comic');
-          });
+        fetch('/api/categories.php', { headers })
+            .then(res => res.json())
+            .then(catData => {
+                const categories = catData.data || [];
+                const catOptions = categories.map(c => `${c.id}: ${c.name}`).join('\n');
+                const selectedCatsStr = prompt(`Edit Category IDs (comma separated):\n\n${catOptions}`, oldCatIds);
+                if (selectedCatsStr === null) return;
+
+                const selectedCats = selectedCatsStr.split(',').map(s => s.trim()).filter(s => s);
+
+                // PUT request using URL encoding
+                fetch(`/api/comics.php?id=${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        ...headers,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `title=${encodeURIComponent(title)}&categories=${encodeURIComponent(selectedCats.join(','))}`
+                }).then(res => res.json())
+                  .then(data => {
+                      if (data.success) loadComics();
+                      else alert('Error updating comic');
+                  });
+            });
     }
 
     window.deleteComic = function(id) {
@@ -279,6 +308,91 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(res => res.json())
                 .then(data => {
                     if(data.success) loadReviews(comicId);
+                });
+        }
+    }
+
+    // --- Categories CRUD ---
+    const addCategoryBtn = document.getElementById('addCategoryBtn');
+    if (addCategoryBtn) {
+        addCategoryBtn.addEventListener('click', () => {
+            const name = prompt("Enter Category Name:");
+            if (!name) return;
+
+            const fd = new FormData();
+            fd.append('name', name);
+
+            fetch('/api/categories.php', { method: 'POST', headers, body: fd })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) loadCategories();
+                    else alert('Error: ' + data.error);
+                });
+        });
+    }
+
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.toString().replace(/[&<>'"]/g,
+            tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag)
+        );
+    }
+
+    function loadCategories() {
+        fetch('/api/categories.php', { headers })
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('adminCategoriesList');
+                const categories = data.data || [];
+
+                if (categories.length === 0) {
+                    list.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-gray-500">No categories found.</td></tr>';
+                    return;
+                }
+
+                list.innerHTML = categories.map(c => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">${c.id}</td>
+                        <td class="p-3">${escapeHTML(c.name)}</td>
+                        <td class="p-3 space-x-2">
+                            <button class="text-blue-600 hover:underline text-sm" onclick="editCategory(${c.id}, '${escapeHTML(c.name).replace(/'/g, "\\'")}')">Edit</button>
+                            <button class="text-red-600 hover:underline text-sm" onclick="deleteCategory(${c.id})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            });
+    }
+
+    window.editCategory = function(id, oldName) {
+        const name = prompt("Edit Category Name:", oldName);
+        if (!name) return;
+
+        fetch(`/api/categories.php?id=${id}`, {
+            method: 'PUT',
+            headers: {
+                ...headers,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `name=${encodeURIComponent(name)}`
+        }).then(res => res.json())
+          .then(data => {
+              if (data.success) loadCategories();
+              else alert('Error updating category');
+          });
+    }
+
+    window.deleteCategory = function(id) {
+        if(confirm("Are you sure you want to delete this category?")) {
+            fetch(`/api/categories.php?id=${id}`, { method: 'DELETE', headers })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) loadCategories();
                 });
         }
     }
