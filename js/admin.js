@@ -59,42 +59,58 @@ document.addEventListener('DOMContentLoaded', () => {
             loadReviews(e.target.value);
         });
         
-        // Add Comic
+        // Comic Modal logic
+        const comicModal = document.getElementById('comicModal');
+        const comicForm = document.getElementById('comicForm');
+        let allCategories = [];
+
+        function populateCategoriesSelect(selectedIds = []) {
+            const select = document.getElementById('comicCategoriesInput');
+            select.innerHTML = allCategories.map(c =>
+                `<option value="${c.id}" ${selectedIds.includes(String(c.id)) ? 'selected' : ''}>${escapeHTML(c.name)}</option>`
+            ).join('');
+        }
+
+        // Fetch categories once for the modal
+        fetch('/api/categories.php', { headers })
+            .then(res => res.json())
+            .then(catData => {
+                allCategories = catData.data || [];
+                populateCategoriesSelect();
+            });
+
         document.getElementById('addComicBtn').addEventListener('click', () => {
-            const title = prompt("Enter Comic Title:");
-            if (!title) return;
+            document.getElementById('comicModalTitle').innerText = 'Add Comic';
+            comicForm.reset();
+            document.getElementById('comicId').value = '';
+            populateCategoriesSelect();
+            comicModal.classList.remove('hidden');
+        });
 
-            fetch('/api/categories.php', { headers })
+        document.getElementById('closeComicModalBtn').addEventListener('click', () => {
+            comicModal.classList.add('hidden');
+        });
+
+        comicForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const fd = new FormData(comicForm);
+
+            // Collect multiple categories
+            const selectedCategories = Array.from(document.getElementById('comicCategoriesInput').selectedOptions).map(opt => opt.value);
+            fd.set('categories', selectedCategories.join(','));
+
+            const isEdit = !!document.getElementById('comicId').value;
+            fd.append('action', isEdit ? 'edit' : 'add');
+
+            fetch('/api/comics.php', { method: 'POST', headers, body: fd })
                 .then(res => res.json())
-                .then(catData => {
-                    const categories = catData.data || [];
-                    const catOptions = categories.map(c => `${c.id}: ${c.name}`).join('\n');
-                    const selectedCatsStr = prompt(`Enter category IDs separated by comma:\n\n${catOptions}`);
-                    
-                    let selectedCats = [];
-                    if (selectedCatsStr) {
-                        selectedCats = selectedCatsStr.split(',').map(s => s.trim()).filter(s => s);
+                .then(data => {
+                    if (data.success) {
+                        comicModal.classList.add('hidden');
+                        loadComics();
+                    } else {
+                        alert('Error: ' + data.error);
                     }
-
-                    const fileInput = document.createElement('input');
-                    fileInput.type = 'file';
-                    fileInput.accept = 'image/*';
-                    fileInput.onchange = e => {
-                        const file = e.target.files[0];
-                        if (!file) return;
-
-                        const fd = new FormData();
-                        fd.append('title', title);
-                        if (selectedCats.length > 0) fd.append('categories', selectedCats.join(','));
-                        fd.append('thumbnail', file);
-                        fetch('/api/comics.php', { method: 'POST', headers, body: fd })
-                            .then(res => res.json())
-                            .then(data => {
-                                if(data.success) loadComics();
-                                else alert('Error: ' + data.error);
-                            });
-                    };
-                    fileInput.click();
                 });
         });
 
@@ -143,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 list.innerHTML = comics.map(c => {
                     const catNames = (c.categories || []).map(cat => cat.name).join(', ') || '-';
-                    const catIds = (c.categories || []).map(cat => cat.id).join(', ');
                     return `
                     <tr class="border-b hover:bg-gray-50">
                         <td class="p-3">${c.id}</td>
@@ -151,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td class="p-3">${escapeHTML(c.title)}</td>
                         <td class="p-3">${escapeHTML(catNames)}</td>
                         <td class="p-3 space-x-2">
-                            <button class="text-blue-600 hover:underline text-sm" onclick="editComic(${c.id}, '${escapeHTML(c.title).replace(/'/g, "\\'")}', '${catIds}')">Edit</button>
+                            <button class="text-blue-600 hover:underline text-sm" onclick="editComic(${c.id})">Edit</button>
                             <button class="text-red-600 hover:underline text-sm" onclick="deleteComic(${c.id})">Delete</button>
                         </td>
                     </tr>
@@ -159,33 +174,41 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    window.editComic = function(id, oldTitle, oldCatIds) {
-        const title = prompt("Edit Title:", oldTitle);
-        if (title === null) return;
-
-        fetch('/api/categories.php', { headers })
+    window.editComic = function(id) {
+        // Fetch full comic details to populate the form
+        fetch(`/api/comics.php?id=${id}`, { headers })
             .then(res => res.json())
-            .then(catData => {
-                const categories = catData.data || [];
-                const catOptions = categories.map(c => `${c.id}: ${c.name}`).join('\n');
-                const selectedCatsStr = prompt(`Edit Category IDs (comma separated):\n\n${catOptions}`, oldCatIds);
-                if (selectedCatsStr === null) return;
+            .then(data => {
+                let comic;
+                if (data.data) {
+                    comic = data.data.find(c => c.id == id) || data.data[0];
+                } else {
+                    comic = data;
+                }
 
-                const selectedCats = selectedCatsStr.split(',').map(s => s.trim()).filter(s => s);
+                if (!comic) return alert('Comic not found');
 
-                // PUT request using URL encoding
-                fetch(`/api/comics.php?id=${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        ...headers,
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `title=${encodeURIComponent(title)}&categories=${encodeURIComponent(selectedCats.join(','))}`
-                }).then(res => res.json())
-                  .then(data => {
-                      if (data.success) loadComics();
-                      else alert('Error updating comic');
-                  });
+                document.getElementById('comicModalTitle').innerText = 'Edit Comic';
+                document.getElementById('comicId').value = comic.id;
+                document.getElementById('comicTitleInput').value = comic.title || '';
+                document.getElementById('comicAltTitleInput').value = comic.alternative_title || '';
+                document.getElementById('comicAuthorInput').value = comic.author || '';
+                document.getElementById('comicArtistInput').value = comic.artist || '';
+                document.getElementById('comicPublisherInput').value = comic.publisher || '';
+                document.getElementById('comicSynopsisInput').value = comic.synopsis || '';
+
+                const catIds = (comic.categories || []).map(cat => String(cat.id));
+                // We need to re-fetch or use allCategories
+                fetch('/api/categories.php', { headers })
+                    .then(res => res.json())
+                    .then(catData => {
+                        const allCategories = catData.data || [];
+                        const select = document.getElementById('comicCategoriesInput');
+                        select.innerHTML = allCategories.map(c =>
+                            `<option value="${c.id}" ${catIds.includes(String(c.id)) ? 'selected' : ''}>${escapeHTML(c.name)}</option>`
+                        ).join('');
+                        document.getElementById('comicModal').classList.remove('hidden');
+                    });
             });
     }
 

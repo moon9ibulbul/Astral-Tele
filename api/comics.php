@@ -86,73 +86,87 @@ if (!$user || $user['role'] !== 'admin') {
 }
 
 if ($method === 'POST') {
-    // Add comic
-    $title = $_POST['title'] ?? '';
-    $altTitle = $_POST['alternative_title'] ?? '';
-    $author = $_POST['author'] ?? '';
-    $artist = $_POST['artist'] ?? '';
-    $publisher = $_POST['publisher'] ?? '';
-    $synopsis = $_POST['synopsis'] ?? '';
-    $categories = isset($_POST['categories']) ? explode(',', $_POST['categories']) : [];
+    $action = $_POST['action'] ?? 'add';
+    $id = $_POST['id'] ?? ($_GET['id'] ?? null);
 
-    $thumbnailUrl = null;
-    if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
-        $tmpName = $_FILES['thumbnail']['tmp_name'];
-        $fileName = 'thumbnails/' . time() . '_' . $_FILES['thumbnail']['name'];
-        $thumbnailUrl = uploadToS3($tmpName, $fileName);
-    }
+    if ($action === 'edit' || (isset($_GET['id']) && $_POST)) {
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID required for edit']);
+            exit;
+        }
 
-    $stmt = $db->prepare("INSERT INTO comics (title, alternative_title, author, artist, publisher, synopsis, thumbnail_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$title, $altTitle, $author, $artist, $publisher, $synopsis, $thumbnailUrl]);
-    $comicId = $db->lastInsertId();
+        $title = $_POST['title'] ?? '';
+        $altTitle = $_POST['alternative_title'] ?? '';
+        $author = $_POST['author'] ?? '';
+        $artist = $_POST['artist'] ?? '';
+        $publisher = $_POST['publisher'] ?? '';
+        $synopsis = $_POST['synopsis'] ?? '';
+        $categories = isset($_POST['categories']) ? explode(',', $_POST['categories']) : [];
 
-    if (!empty($categories)) {
-        $catStmt = $db->prepare("INSERT INTO comic_categories (comic_id, category_id) VALUES (?, ?)");
-        foreach ($categories as $catId) {
-            $catId = (int)$catId;
-            if ($catId > 0) {
-                $catStmt->execute([$comicId, $catId]);
+        $stmt = $db->prepare("SELECT thumbnail_url FROM comics WHERE id = ?");
+        $stmt->execute([$id]);
+        $comic = $stmt->fetch();
+        $thumbnailUrl = $comic['thumbnail_url'] ?? null;
+
+        if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
+            $tmpName = $_FILES['thumbnail']['tmp_name'];
+            $fileName = 'thumbnails/' . time() . '_' . $_FILES['thumbnail']['name'];
+            $thumbnailUrl = uploadToS3($tmpName, $fileName);
+        }
+
+        $stmt = $db->prepare("UPDATE comics SET title = ?, alternative_title = ?, author = ?, artist = ?, publisher = ?, synopsis = ?, thumbnail_url = ? WHERE id = ?");
+        $stmt->execute([$title, $altTitle, $author, $artist, $publisher, $synopsis, $thumbnailUrl, $id]);
+
+        $delStmt = $db->prepare("DELETE FROM comic_categories WHERE comic_id = ?");
+        $delStmt->execute([$id]);
+
+        if (!empty($categories)) {
+            $catStmt = $db->prepare("INSERT INTO comic_categories (comic_id, category_id) VALUES (?, ?)");
+            foreach ($categories as $catId) {
+                $catId = (int)$catId;
+                if ($catId > 0) {
+                    $catStmt->execute([$id, $catId]);
+                }
             }
         }
-    }
-    
-    echo json_encode(['success' => true, 'id' => $comicId]);
-    exit;
-}
 
-if ($method === 'PUT') {
-    parse_str(file_get_contents("php://input"), $_PUT);
-    $id = $_GET['id'] ?? null;
-    if (!$id) {
-        http_response_code(400);
-        echo json_encode(['error' => 'ID required']);
+        echo json_encode(['success' => true]);
+        exit;
+    } else {
+        // Add comic
+        $title = $_POST['title'] ?? '';
+        $altTitle = $_POST['alternative_title'] ?? '';
+        $author = $_POST['author'] ?? '';
+        $artist = $_POST['artist'] ?? '';
+        $publisher = $_POST['publisher'] ?? '';
+        $synopsis = $_POST['synopsis'] ?? '';
+        $categories = isset($_POST['categories']) ? explode(',', $_POST['categories']) : [];
+
+        $thumbnailUrl = null;
+        if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
+            $tmpName = $_FILES['thumbnail']['tmp_name'];
+            $fileName = 'thumbnails/' . time() . '_' . $_FILES['thumbnail']['name'];
+            $thumbnailUrl = uploadToS3($tmpName, $fileName);
+        }
+
+        $stmt = $db->prepare("INSERT INTO comics (title, alternative_title, author, artist, publisher, synopsis, thumbnail_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$title, $altTitle, $author, $artist, $publisher, $synopsis, $thumbnailUrl]);
+        $comicId = $db->lastInsertId();
+
+        if (!empty($categories)) {
+            $catStmt = $db->prepare("INSERT INTO comic_categories (comic_id, category_id) VALUES (?, ?)");
+            foreach ($categories as $catId) {
+                $catId = (int)$catId;
+                if ($catId > 0) {
+                    $catStmt->execute([$comicId, $catId]);
+                }
+            }
+        }
+
+        echo json_encode(['success' => true, 'id' => $comicId]);
         exit;
     }
-    
-    // Update basic text fields for simplicity (multipart/form-data with PUT is tricky in raw PHP)
-    $title = $_PUT['title'] ?? '';
-    $categories = isset($_PUT['categories']) ? explode(',', $_PUT['categories']) : [];
-
-    $stmt = $db->prepare("UPDATE comics SET title = ? WHERE id = ?");
-    $stmt->execute([$title, $id]);
-
-    // Delete existing categories
-    $delStmt = $db->prepare("DELETE FROM comic_categories WHERE comic_id = ?");
-    $delStmt->execute([$id]);
-
-    // Insert new categories
-    if (!empty($categories)) {
-        $catStmt = $db->prepare("INSERT INTO comic_categories (comic_id, category_id) VALUES (?, ?)");
-        foreach ($categories as $catId) {
-            $catId = (int)$catId;
-            if ($catId > 0) {
-                $catStmt->execute([$id, $catId]);
-            }
-        }
-    }
-    
-    echo json_encode(['success' => true]);
-    exit;
 }
 
 if ($method === 'DELETE') {

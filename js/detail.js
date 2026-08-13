@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (comic) {
+                document.title = comic.title + " - Astral-Tele";
                 document.getElementById('headerTitle').innerText = comic.title;
                 document.getElementById('comicTitle').innerText = comic.title;
                 document.getElementById('comicAltTitle').innerText = comic.alternative_title || '';
@@ -99,6 +100,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch Reviews
     loadReviews();
 
+    const reviewImageInput = document.getElementById('reviewImage');
+    const reviewImageLabel = document.getElementById('reviewImageLabel');
+    if (reviewImageInput && reviewImageLabel) {
+        reviewImageInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                reviewImageLabel.innerText = e.target.files[0].name;
+            } else {
+                reviewImageLabel.innerText = 'Attach Image';
+            }
+        });
+    }
+
     const submitReviewBtn = document.getElementById('submitReviewBtn');
     if (submitReviewBtn) {
         submitReviewBtn.addEventListener('click', () => {
@@ -127,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('reviewContent').value = '';
                         document.getElementById('reviewRating').value = '';
                         document.getElementById('reviewImage').value = '';
+                        if (reviewImageLabel) reviewImageLabel.innerText = 'Attach Image';
                         loadReviews();
                     } else {
                         alert(data.error || 'Failed to submit review. Ensure you are authenticated.');

@@ -67,7 +67,13 @@
                             <option value="2">2 - Bad</option>
                             <option value="1">1 - Terrible</option>
                         </select>
-                        <input type="file" id="reviewImage" class="text-xs text-gray-500 w-full sm:w-auto" accept="image/*">
+                        <div class="relative w-full sm:w-auto">
+                            <input type="file" id="reviewImage" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                            <button type="button" class="flex items-center gap-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg border border-gray-300 w-full justify-center">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                <span id="reviewImageLabel">Attach Image</span>
+                            </button>
+                        </div>
                     </div>
                     <button id="submitReviewBtn" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-blue-700 w-full sm:w-auto shrink-0">Submit</button>
                 </div>
