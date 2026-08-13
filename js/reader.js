@@ -148,6 +148,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentChapterIndex !== -1) {
                 const chapter = allChapters[currentChapterIndex];
 
+                // Log to history
+                const headers = {};
+                const tg = window.Telegram && window.Telegram.WebApp;
+                if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+                const fd = new FormData();
+                fd.append('chapter_id', chapterId);
+                fetch('/api/history.php', { method: 'POST', headers, body: fd }).catch(() => {});
+
                 const dropdown = document.getElementById('chapterDropdown');
                 if (dropdown) {
                     dropdown.innerHTML = allChapters.map(ch =>

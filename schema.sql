@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS `users` (
     `id` BIGINT PRIMARY KEY,
-    `username` VARCHAR(255) NULL,
+    `username` VARCHAR(255) NULL UNIQUE,
     `first_name` VARCHAR(255) NULL,
     `last_name` VARCHAR(255) NULL,
     `photo_url` TEXT NULL,
@@ -54,6 +54,24 @@ CREATE TABLE IF NOT EXISTS `unlocked_chapters` (
     `user_id` BIGINT NOT NULL,
     `chapter_id` INT NOT NULL,
     `unlocked_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`user_id`, `chapter_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`chapter_id`) REFERENCES `chapters`(`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS `bookmarks` (
+    `user_id` BIGINT NOT NULL,
+    `comic_id` INT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`user_id`, `comic_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`comic_id`) REFERENCES `comics`(`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS `reading_history` (
+    `user_id` BIGINT NOT NULL,
+    `chapter_id` INT NOT NULL,
+    `read_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`user_id`, `chapter_id`),
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`chapter_id`) REFERENCES `chapters`(`id`) ON DELETE CASCADE
