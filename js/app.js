@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Check if we are on index page
     if (comicGrid) {
+        // Parse category from URL if present
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('category')) {
+            currentCategory = urlParams.get('category');
+        }
+
+        loadCategories();
         loadComics();
 
         // Search Handlers
@@ -22,23 +29,66 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPage = 1;
             loadComics();
         });
+    }
 
-        // Category Handlers
-        document.querySelectorAll('.category-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                // Update active state
-                document.querySelectorAll('.category-btn').forEach(b => {
-                    b.classList.remove('bg-blue-600', 'text-white');
-                    b.classList.add('bg-gray-200', 'text-gray-700');
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.toString().replace(/[&<>'"]/g,
+            tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag)
+        );
+    }
+
+    function loadCategories() {
+        const nav = document.getElementById('categoryNav');
+        if (!nav) return;
+
+        fetch('/api/categories.php')
+            .then(res => res.json())
+            .then(data => {
+                const categories = data.data || [];
+                let html = `<button class="category-btn ${currentCategory === '' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'} px-4 py-1 rounded-full whitespace-nowrap text-sm font-medium hover:bg-gray-300" data-category="">All</button>`;
+
+                categories.forEach(c => {
+                    const isActive = currentCategory === c.name;
+                    html += `<button class="category-btn ${isActive ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'} px-4 py-1 rounded-full whitespace-nowrap text-sm font-medium hover:bg-gray-300" data-category="${escapeHTML(c.name)}">${escapeHTML(c.name)}</button>`;
                 });
-                e.target.classList.remove('bg-gray-200', 'text-gray-700');
-                e.target.classList.add('bg-blue-600', 'text-white');
 
-                currentCategory = e.target.getAttribute('data-category');
-                currentPage = 1;
-                loadComics();
-            });
-        });
+                nav.innerHTML = html;
+
+                // Attach event listeners
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        // Update active state
+                        document.querySelectorAll('.category-btn').forEach(b => {
+                            b.classList.remove('bg-blue-600', 'text-white');
+                            b.classList.add('bg-gray-200', 'text-gray-700');
+                        });
+                        e.target.classList.remove('bg-gray-200', 'text-gray-700');
+                        e.target.classList.add('bg-blue-600', 'text-white');
+
+                        currentCategory = e.target.getAttribute('data-category');
+                        currentPage = 1;
+
+                        // Update URL without reloading
+                        const newUrl = new URL(window.location);
+                        if (currentCategory) {
+                            newUrl.searchParams.set('category', currentCategory);
+                        } else {
+                            newUrl.searchParams.delete('category');
+                        }
+                        window.history.pushState({}, '', newUrl);
+
+                        loadComics();
+                    });
+                });
+            })
+            .catch(err => console.error("Error loading categories", err));
     }
 
     function loadComics() {

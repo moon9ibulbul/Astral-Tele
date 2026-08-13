@@ -52,7 +52,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('comicTitle').innerText = comic.title;
                 document.getElementById('comicAltTitle').innerText = comic.alternative_title || '';
                 document.getElementById('comicRating').innerText = comic.average_rating;
-                document.getElementById('comicCategory').innerText = comic.category || 'Uncategorized';
+
+                const catContainer = document.getElementById('comicCategories');
+                if (comic.categories && comic.categories.length > 0) {
+                    catContainer.innerHTML = comic.categories.map(cat =>
+                        `<a href="index.html?category=${encodeURIComponent(cat.name)}" class="bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded text-gray-600 cursor-pointer block">${escapeHTML(cat.name)}</a>`
+                    ).join('');
+                } else {
+                    catContainer.innerHTML = `<span class="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Uncategorized</span>`;
+                }
+
                 document.getElementById('comicAuthor').innerText = comic.author || '-';
                 document.getElementById('comicArtist').innerText = comic.artist || '-';
                 document.getElementById('comicPublisher').innerText = comic.publisher || '-';
