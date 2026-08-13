@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comic Detail - Astral-Tele</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body class="bg-gray-100 font-sans antialiased text-gray-900 pb-20">
+
+    <header class="bg-white shadow p-4 sticky top-0 z-10 flex items-center">
+        <button onclick="window.history.back()" class="mr-4 text-gray-600 hover:text-black">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        </button>
+        <h1 class="text-lg font-bold truncate" id="headerTitle">Loading...</h1>
+    </header>
+
+    <main class="max-w-4xl mx-auto bg-white min-h-screen">
+        <!-- Metadata Section -->
+        <div class="flex flex-col md:flex-row p-4 gap-4 border-b">
+            <div class="w-full md:w-1/3 aspect-[3/4] bg-gray-200 rounded-lg overflow-hidden shrink-0">
+                <img id="comicThumb" src="" alt="" class="w-full h-full object-cover hidden">
+            </div>
+            <div class="flex-1 space-y-2">
+                <h2 id="comicTitle" class="text-2xl font-bold"></h2>
+                <p id="comicAltTitle" class="text-gray-500 italic text-sm"></p>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-yellow-500">★ <span id="comicRating">0.00</span></span>
+                    <span class="text-gray-400">|</span>
+                    <span id="comicCategory" class="bg-gray-100 px-2 py-0.5 rounded text-gray-600"></span>
+                </div>
+                <div class="text-sm space-y-1 mt-4">
+                    <p><strong>Author:</strong> <span id="comicAuthor">-</span></p>
+                    <p><strong>Artist:</strong> <span id="comicArtist">-</span></p>
+                    <p><strong>Publisher:</strong> <span id="comicPublisher">-</span></p>
+                </div>
+                <div class="mt-4">
+                    <h3 class="font-bold border-b pb-1 mb-2">Synopsis</h3>
+                    <p id="comicSynopsis" class="text-sm text-gray-700 leading-relaxed"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chapters Section -->
+        <div class="p-4">
+            <h3 class="font-bold text-lg mb-4">Chapters</h3>
+            <div id="chapterList" class="space-y-2 max-h-96 overflow-y-auto">
+                <p class="text-gray-500 text-sm">Loading chapters...</p>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="p-4 border-t bg-gray-50">
+            <h3 class="font-bold text-lg mb-4">Reviews & Comments</h3>
+            
+            <!-- Add Review Form -->
+            <div class="mb-6 bg-white p-4 rounded-lg shadow-sm border">
+                <textarea id="reviewContent" rows="3" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Write a review..."></textarea>
+                <div class="flex justify-between items-center mt-2">
+                    <div class="flex items-center gap-2">
+                        <select id="reviewRating" class="border rounded p-1 text-sm bg-white">
+                            <option value="">No Rating</option>
+                            <option value="5">5 - Masterpiece</option>
+                            <option value="4">4 - Great</option>
+                            <option value="3">3 - Good</option>
+                            <option value="2">2 - Bad</option>
+                            <option value="1">1 - Terrible</option>
+                        </select>
+                        <input type="file" id="reviewImage" class="text-xs text-gray-500" accept="image/*">
+                    </div>
+                    <button id="submitReviewBtn" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-blue-700">Submit</button>
+                </div>
+            </div>
+
+            <div id="reviewsList" class="space-y-4">
+                <p class="text-gray-500 text-sm">Loading reviews...</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+    <script src="js/detail.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+    "name": "astral/tele",
+    "description": "Telegram Mini App for Reading Comics",
+    "type": "project",
+    "require": {
+        "aws/aws-sdk-php": "^3.280"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Astral-Tele</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body class="bg-gray-100 font-sans antialiased text-gray-900">
+    <div id="authGate" class="flex items-center justify-center min-h-screen">
+        <div class="text-center p-8 bg-white rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-4">Admin Authentication Required</h2>
+            <p class="text-sm text-gray-500 mb-4">Please open this page inside the Telegram Mini App as an Administrator.</p>
+            <div id="authError" class="text-red-500 text-sm hidden"></div>
+        </div>
+    </div>
+
+    <div id="adminPanel" class="hidden min-h-screen flex flex-col md:flex-row">
+        <!-- Sidebar -->
+        <aside class="w-full md:w-64 bg-gray-800 text-white min-h-full p-4 flex flex-col">
+            <h1 class="text-2xl font-bold mb-8">Admin Panel</h1>
+            <nav class="space-y-2 flex-1">
+                <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-700 active-tab bg-gray-700" data-target="comicsTab">Comics</button>
+                <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-700" data-target="chaptersTab">Chapters</button>
+                <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-700" data-target="commentsTab">Comments & Reviews</button>
+            </nav>
+            <div class="mt-auto text-xs text-gray-400">Astral-Tele Admin</div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 bg-gray-100">
+            <!-- Comics Tab -->
+            <section id="comicsTab" class="tab-content block">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Manage Comics</h2>
+                    <button id="addComicBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add Comic</button>
+                </div>
+                <div class="bg-white rounded-lg shadow overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 border-b">
+                                <th class="p-3">ID</th>
+                                <th class="p-3">Thumbnail</th>
+                                <th class="p-3">Title</th>
+                                <th class="p-3">Category</th>
+                                <th class="p-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminComicsList">
+                            <tr><td colspan="5" class="p-3 text-center text-gray-500">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Chapters Tab -->
+            <section id="chaptersTab" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Manage Chapters</h2>
+                    <button id="addChapterBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Upload Chapter (PDF)</button>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-1">Select Comic</label>
+                    <select id="chapterComicSelect" class="w-full border rounded p-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Loading comics...</option>
+                    </select>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 border-b">
+                                <th class="p-3">ID</th>
+                                <th class="p-3">Chapter #</th>
+                                <th class="p-3">Title</th>
+                                <th class="p-3">PDF URL</th>
+                                <th class="p-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminChaptersList">
+                            <tr><td colspan="5" class="p-3 text-center text-gray-500">Select a comic to view chapters.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Comments Tab -->
+            <section id="commentsTab" class="tab-content hidden">
+                <h2 class="text-2xl font-bold mb-6">Manage Comments & Reviews</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-1">Select Comic</label>
+                    <select id="reviewComicSelect" class="w-full border rounded p-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Loading comics...</option>
+                    </select>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 border-b">
+                                <th class="p-3">ID</th>
+                                <th class="p-3">User</th>
+                                <th class="p-3">Content</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminReviewsList">
+                            <tr><td colspan="5" class="p-3 text-center text-gray-500">Select a comic to view reviews.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals would go here (Add Comic, Add Chapter) - simplified for brevity, assume JS handles prompts or basic forms -->
+    <script src="js/admin.js"></script>
+</body>
+</html>
