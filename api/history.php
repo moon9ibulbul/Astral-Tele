@@ -57,5 +57,29 @@ if ($method === 'POST') {
     ");
     $stmtComic->execute([$chapterId]);
 
+    // Keep only the 100 most recent reading histories for the user
+    // We do this by finding the read_at timestamp of the 100th record
+    // and deleting anything older.
+    $stmtCount = $db->prepare("SELECT COUNT(*) FROM reading_history WHERE user_id = ?");
+    $stmtCount->execute([$user['id']]);
+    $historyCount = $stmtCount->fetchColumn();
+
+    if ($historyCount > 100) {
+        $stmtOffset = $db->prepare("
+            SELECT read_at
+            FROM reading_history
+            WHERE user_id = ?
+            ORDER BY read_at DESC
+            LIMIT 1 OFFSET 99
+        ");
+        $stmtOffset->execute([$user['id']]);
+        $thresholdDate = $stmtOffset->fetchColumn();
+
+        if ($thresholdDate) {
+            $stmtDel = $db->prepare("DELETE FROM reading_history WHERE user_id = ? AND read_at < ?");
+            $stmtDel->execute([$user['id'], $thresholdDate]);
+        }
+    }
+
     echo json_encode(['success' => true]);
 }
