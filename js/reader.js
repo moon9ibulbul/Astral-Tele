@@ -171,10 +171,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 updateNavigationButtons();
                 fetchCurrentChapter();
+                loadReactions();
             } else {
                 document.getElementById('loadingIndicator').innerText = "Chapter not found.";
             }
         });
+
+    function loadReactions() {
+        fetch(`/api/reactions.php?chapter_id=${chapterId}`)
+            .then(res => res.json())
+            .then(data => {
+                const reactions = data.data || {};
+                const userReaction = data.user_reaction;
+                const container = document.getElementById('reactionsContainer');
+                if (!container) return;
+
+                const emojis = {
+                    'Happy': '😀',
+                    'Sad': '😢',
+                    'Laugh': '😂',
+                    'Angry': '😡',
+                    'Fire': '🔥'
+                };
+
+                let html = '';
+                for (const [type, count] of Object.entries(reactions)) {
+                    const isSelected = userReaction === type;
+                    const btnClass = isSelected ? 'bg-blue-100 border-blue-400 shadow-inner' : 'bg-white border-gray-200 hover:bg-gray-50';
+                    html += `
+                        <button onclick="submitReaction('${type}')" class="flex flex-col items-center px-4 py-2 border rounded-xl ${btnClass} transition-colors">
+                            <span class="text-2xl">${emojis[type] || '👍'}</span>
+                            <span class="text-xs font-bold text-gray-700 mt-1">${count}</span>
+                        </button>
+                    `;
+                }
+                container.innerHTML = html;
+            });
+    }
+
+    window.submitReaction = function(reactionType) {
+        const headers = {};
+        const tg = window.Telegram && window.Telegram.WebApp;
+        if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+
+        const fd = new FormData();
+        fd.append('chapter_id', chapterId);
+        fd.append('reaction_type', reactionType);
+
+        fetch('/api/reactions.php', { method: 'POST', headers, body: fd })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    loadReactions();
+                } else {
+                    alert(data.error || 'Failed to submit reaction.');
+                }
+            });
+    };
 
     // Also fetch comic title
     fetch(`/api/comics.php?id=${comicId}`)

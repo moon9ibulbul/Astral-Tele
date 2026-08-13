@@ -48,5 +48,14 @@ if ($method === 'POST') {
     ");
     $stmt->execute([$user['id'], $chapterId]);
 
+    // Also increment the comic views
+    $stmtComic = $db->prepare("
+        UPDATE comics c
+        JOIN chapters ch ON ch.comic_id = c.id
+        SET c.views = c.views + 1
+        WHERE ch.id = ?
+    ");
+    $stmtComic->execute([$chapterId]);
+
     echo json_encode(['success' => true]);
 }

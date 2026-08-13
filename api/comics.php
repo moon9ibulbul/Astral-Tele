@@ -102,6 +102,8 @@ if ($method === 'POST') {
         $artist = $_POST['artist'] ?? '';
         $publisher = $_POST['publisher'] ?? '';
         $synopsis = $_POST['synopsis'] ?? '';
+        $year = isset($_POST['year']) && $_POST['year'] !== '' ? (int)$_POST['year'] : null;
+        $status = $_POST['status'] ?? 'Ongoing';
         $categories = isset($_POST['categories']) ? explode(',', $_POST['categories']) : [];
 
         $stmt = $db->prepare("SELECT thumbnail_url FROM comics WHERE id = ?");
@@ -115,8 +117,8 @@ if ($method === 'POST') {
             $thumbnailUrl = uploadToS3($tmpName, $fileName);
         }
 
-        $stmt = $db->prepare("UPDATE comics SET title = ?, alternative_title = ?, author = ?, artist = ?, publisher = ?, synopsis = ?, thumbnail_url = ? WHERE id = ?");
-        $stmt->execute([$title, $altTitle, $author, $artist, $publisher, $synopsis, $thumbnailUrl, $id]);
+        $stmt = $db->prepare("UPDATE comics SET title = ?, alternative_title = ?, author = ?, artist = ?, publisher = ?, synopsis = ?, thumbnail_url = ?, year = ?, status = ? WHERE id = ?");
+        $stmt->execute([$title, $altTitle, $author, $artist, $publisher, $synopsis, $thumbnailUrl, $year, $status, $id]);
 
         $delStmt = $db->prepare("DELETE FROM comic_categories WHERE comic_id = ?");
         $delStmt->execute([$id]);
@@ -141,6 +143,8 @@ if ($method === 'POST') {
         $artist = $_POST['artist'] ?? '';
         $publisher = $_POST['publisher'] ?? '';
         $synopsis = $_POST['synopsis'] ?? '';
+        $year = isset($_POST['year']) && $_POST['year'] !== '' ? (int)$_POST['year'] : null;
+        $status = $_POST['status'] ?? 'Ongoing';
         $categories = isset($_POST['categories']) ? explode(',', $_POST['categories']) : [];
 
         $thumbnailUrl = null;
@@ -150,8 +154,8 @@ if ($method === 'POST') {
             $thumbnailUrl = uploadToS3($tmpName, $fileName);
         }
 
-        $stmt = $db->prepare("INSERT INTO comics (title, alternative_title, author, artist, publisher, synopsis, thumbnail_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$title, $altTitle, $author, $artist, $publisher, $synopsis, $thumbnailUrl]);
+        $stmt = $db->prepare("INSERT INTO comics (title, alternative_title, author, artist, publisher, synopsis, thumbnail_url, year, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$title, $altTitle, $author, $artist, $publisher, $synopsis, $thumbnailUrl, $year, $status]);
         $comicId = $db->lastInsertId();
 
         if (!empty($categories)) {

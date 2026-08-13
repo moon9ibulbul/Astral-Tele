@@ -201,6 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('comicArtistInput').value = comic.artist || '';
                 document.getElementById('comicPublisherInput').value = comic.publisher || '';
                 document.getElementById('comicSynopsisInput').value = comic.synopsis || '';
+                document.getElementById('comicYearInput').value = comic.year || '';
+                document.getElementById('comicStatusInput').value = comic.status || 'Ongoing';
 
                 const catIds = (comic.categories || []).map(cat => String(cat.id));
                 // We need to re-fetch or use allCategories
