@@ -116,9 +116,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        comicGrid.innerHTML = comics.map(comic => `
-            <div class="bg-white rounded-lg shadow overflow-hidden flex flex-col cursor-pointer" onclick="window.location.href='detail.html?id=${comic.id}'">
-                <div class="aspect-[3/4] bg-gray-200">
+        comicGrid.innerHTML = comics.map(comic => {
+            let statusColor = 'bg-green-500'; // Default Ongoing
+            if (comic.status === 'Completed') statusColor = 'bg-blue-500';
+            else if (comic.status === 'On Hold') statusColor = 'bg-yellow-500';
+            else if (comic.status === 'Hiatus') statusColor = 'bg-black';
+            else if (comic.status === 'Dropped') statusColor = 'bg-red-500';
+
+            return `
+            <div class="bg-white rounded-lg shadow overflow-hidden flex flex-col cursor-pointer relative" onclick="window.location.href='detail.html?id=${comic.id}'">
+                <div class="absolute top-2 left-2 ${statusColor} text-white text-[10px] font-bold px-2 py-0.5 rounded shadow z-10">
+                    ${escapeHTML(comic.status || 'Ongoing')}
+                </div>
+                <div class="aspect-[3/4] bg-gray-200 relative">
                     <img src="${comic.thumbnail_url || 'https://via.placeholder.com/300x400?text=No+Image'}" alt="${comic.title}" class="w-full h-full object-cover">
                 </div>
                 <div class="p-3 flex-1 flex flex-col">
@@ -130,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     function renderPagination(totalPages) {
