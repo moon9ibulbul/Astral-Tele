@@ -76,10 +76,58 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-    // Fetch Chapters
-    fetch(`/api/chapters.php?comic_id=${comicId}`)
-        .then(res => res.json())
-        .then(chapters => {
+    const tg = window.Telegram && window.Telegram.WebApp;
+    const headers = {};
+    if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+
+    // Bookmark Toggle Logic
+    const bookmarkBtn = document.getElementById('bookmarkBtn');
+    const bookmarkText = document.getElementById('bookmarkText');
+    if (bookmarkBtn) {
+        // Fetch current bookmark status
+        fetch(`/api/bookmarks.php?comic_id=${comicId}`, { headers })
+            .then(res => res.json())
+            .then(data => {
+                if (data.bookmarked) {
+                    setBookmarkActive(true);
+                }
+            });
+
+        bookmarkBtn.addEventListener('click', () => {
+            const fd = new FormData();
+            fd.append('comic_id', comicId);
+            fd.append('action', 'toggle');
+
+            fetch('/api/bookmarks.php', { method: 'POST', headers, body: fd })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        setBookmarkActive(data.bookmarked);
+                    } else {
+                        alert('Failed to toggle bookmark: ' + (data.error || 'Unauthorized'));
+                    }
+                });
+        });
+    }
+
+    function setBookmarkActive(isActive) {
+        if (isActive) {
+            bookmarkBtn.classList.remove('text-gray-700', 'bg-gray-50', 'hover:bg-gray-100');
+            bookmarkBtn.classList.add('text-white', 'bg-blue-600', 'hover:bg-blue-700');
+            bookmarkText.innerText = 'Bookmarked';
+        } else {
+            bookmarkBtn.classList.add('text-gray-700', 'bg-gray-50', 'hover:bg-gray-100');
+            bookmarkBtn.classList.remove('text-white', 'bg-blue-600', 'hover:bg-blue-700');
+            bookmarkText.innerText = 'Bookmark';
+        }
+    }
+
+    // Fetch Chapters and Reading History
+    Promise.all([
+        fetch(`/api/chapters.php?comic_id=${comicId}`).then(res => res.json()),
+        fetch(`/api/history.php?comic_id=${comicId}`, { headers }).then(res => res.ok ? res.json() : {data: []})
+    ]).then(([chapters, historyData]) => {
+            const readChapterIds = historyData.data || [];
             const list = document.getElementById('chapterList');
             if (chapters.length === 0) {
                 list.innerHTML = '<p class="text-sm text-gray-500">No chapters available.</p>';
@@ -92,8 +140,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (ch.has_password == 1) icons += ' 🔒';
                 if (ch.price > 0) icons += ' ⭐';
 
+                const isRead = readChapterIds.includes(ch.id);
+                const bgClass = isRead ? 'bg-gray-100' : 'bg-white';
+                const textClass = isRead ? 'text-gray-500' : 'text-gray-900';
+
                 return `
-                <a href="reader.html?id=${ch.id}&comic_id=${comicId}" class="block bg-white border rounded-lg p-3 hover:bg-gray-50 transition flex justify-between items-center">
+                <a href="reader.html?id=${ch.id}&comic_id=${comicId}" class="block ${bgClass} border rounded-lg p-3 hover:bg-gray-50 transition flex justify-between items-center ${textClass}">
                     <div>
                         <span class="font-bold text-sm">Chapter ${ch.chapter_number}${icons}</span>
                         ${ch.title ? `<span class="text-xs text-gray-500 ml-2">- ${ch.title}</span>` : ''}
