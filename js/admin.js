@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById(targetId).classList.remove('hidden');
 
                 if (targetId === 'categoriesTab') loadCategories();
+                if (targetId === 'questsTab') loadQuestsTab();
             });
         });
 
@@ -479,4 +480,71 @@ function loadReviews(comicId) {
                 });
         }
     }
+
+    // Quests Tab Logic
+    function loadQuestsTab() {
+        fetch('/api/quests.php?admin=1', { headers })
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('adminQuestsList');
+                if (!data.quests || data.quests.length === 0) {
+                    list.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-500">No quests found.</td></tr>';
+                    return;
+                }
+
+                list.innerHTML = data.quests.map(q => `
+                    <tr class="border-b" data-quest-id="${q.id}">
+                        <td class="p-3"><input type="checkbox" class="quest-active-cb" ${q.is_active ? 'checked' : ''}></td>
+                        <td class="p-3">${q.title}</td>
+                        <td class="p-3"><input type="number" class="quest-pts-input border rounded px-2 w-20" value="${q.reward_pts}"></td>
+                        <td class="p-3">
+                            <select class="quest-period-select border rounded px-2">
+                                <option value="daily" ${q.period === 'daily' ? 'selected' : ''}>Daily</option>
+                                <option value="weekly" ${q.period === 'weekly' ? 'selected' : ''}>Weekly</option>
+                            </select>
+                        </td>
+                    </tr>
+                `).join('');
+            });
+    }
+
+    document.getElementById('saveQuestsBtn').addEventListener('click', () => {
+        const rows = document.querySelectorAll('#adminQuestsList tr[data-quest-id]');
+        const quests = [];
+        rows.forEach(row => {
+            quests.push({
+                id: row.getAttribute('data-quest-id'),
+                is_active: row.querySelector('.quest-active-cb').checked,
+                reward_pts: row.querySelector('.quest-pts-input').value,
+                period: row.querySelector('.quest-period-select').value
+            });
+        });
+
+        const fd = new URLSearchParams();
+        fd.append('quests', JSON.stringify(quests));
+
+        fetch('/api/quests.php', { method: 'PUT', headers, body: fd })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Quests updated successfully.');
+                    loadQuestsTab();
+                } else {
+                    alert(data.error || 'Failed to update quests.');
+                }
+            });
+    });
+
 });
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.toString().replace(/[&<>'"\]/g,
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '\'': '&#39;',
+            '"': '&quot;'
+        }[tag] || tag)
+    );
+}

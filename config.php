@@ -2,7 +2,7 @@
 
 $config = [
     'db' => [
-        'host' => 'localhost',
+        'host' => '127.0.0.1',
         'dbname' => 'astral_tele',
         'user' => 'root',
         'pass' => '',

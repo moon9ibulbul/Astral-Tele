@@ -150,6 +150,30 @@
                     </table>
                 </div>
             </section>
+
+            <!-- Quests Tab -->
+            <section id="questsTab" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Manage Quests</h2>
+                    <button id="saveQuestsBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Changes</button>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">You can set up to 5 active quests.</p>
+                <div class="bg-white rounded-lg shadow overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 border-b">
+                                <th class="p-3">Active</th>
+                                <th class="p-3">Title</th>
+                                <th class="p-3">Reward PTS</th>
+                                <th class="p-3">Period</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminQuestsList">
+                            <tr><td colspan="4" class="p-3 text-center text-gray-500">Loading quests...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </main>
     </div>
 
