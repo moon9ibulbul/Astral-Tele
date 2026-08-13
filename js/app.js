@@ -116,6 +116,34 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const now = new Date();
+
+        function getChapterTimeLabel(createdAt) {
+            if (!createdAt) return '';
+            const chapterDate = new Date(createdAt);
+            const diffMs = now - chapterDate;
+            const diffHours = diffMs / (1000 * 60 * 60);
+
+            if (diffHours < 24) {
+                return '<span class="text-red-500 font-bold ml-1">NEW</span>';
+            } else {
+                const diffDays = Math.floor(diffHours / 24);
+                if (diffDays < 7) {
+                    return `<span class="text-gray-400 ml-1">${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago</span>`;
+                }
+                const diffWeeks = Math.floor(diffDays / 7);
+                if (diffWeeks < 4) {
+                    return `<span class="text-gray-400 ml-1">${diffWeeks} ${diffWeeks === 1 ? 'week' : 'weeks'} ago</span>`;
+                }
+                const diffMonths = Math.floor(diffDays / 30);
+                if (diffMonths < 12) {
+                    return `<span class="text-gray-400 ml-1">${diffMonths} ${diffMonths === 1 ? 'month' : 'months'} ago</span>`;
+                }
+                const diffYears = Math.floor(diffDays / 365);
+                return `<span class="text-gray-400 ml-1">${diffYears} ${diffYears === 1 ? 'year' : 'years'} ago</span>`;
+            }
+        }
+
         comicGrid.innerHTML = comics.map(comic => {
             let statusColor = 'bg-green-500'; // Default Ongoing
             if (comic.status === 'Completed') statusColor = 'bg-blue-500';
@@ -135,7 +163,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3 class="font-bold text-sm line-clamp-2 mb-2">${comic.title}</h3>
                     <div class="mt-auto space-y-1">
                         ${comic.latest_chapters && comic.latest_chapters.length > 0 ? comic.latest_chapters.map(ch => `
-                            <div class="text-xs text-blue-600 truncate border border-blue-100 rounded px-2 py-1 bg-blue-50">Ch. ${ch.chapter_number}</div>
+                            <div class="flex justify-between items-center text-xs text-blue-600 border border-blue-100 rounded px-2 py-1 bg-blue-50">
+                                <span class="truncate">Ch. ${ch.chapter_number}</span>
+                                <span class="shrink-0 text-[10px]">${getChapterTimeLabel(ch.created_at)}</span>
+                            </div>
                         `).join('') : '<div class="text-xs text-gray-400">No chapters</div>'}
                     </div>
                 </div>

@@ -66,6 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('comicAuthor').innerText = comic.author || '-';
                 document.getElementById('comicArtist').innerText = comic.artist || '-';
                 document.getElementById('comicPublisher').innerText = comic.publisher || '-';
+            document.getElementById('comicYear').innerText = comic.year || '-';
+            document.getElementById('comicStatus').innerText = comic.status || '-';
+            document.getElementById('comicViews').innerText = comic.views || '0';
                 document.getElementById('comicSynopsis').innerText = comic.synopsis || 'No synopsis available.';
                 
                 const thumb = document.getElementById('comicThumb');

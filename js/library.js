@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tg) tg.expand();
 
     let currentTab = 'history';
+    let currentPage = 1;
 
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.classList.add('bg-blue-600', 'text-white');
 
             currentTab = e.target.getAttribute('data-tab');
+            currentPage = 1;
             loadData();
         });
     });
@@ -23,14 +25,42 @@ document.addEventListener('DOMContentLoaded', () => {
         return str.toString().replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }
 
+    function renderPagination(totalPages) {
+        const paginationControls = document.getElementById('paginationControls');
+        if (!paginationControls) return;
+
+        if (totalPages <= 1) {
+            paginationControls.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        if (currentPage > 1) {
+            html += `<button onclick="changePage(${currentPage - 1})" class="px-3 py-1 border rounded bg-white">Prev</button>`;
+        }
+        html += `<span class="px-3 py-1 font-bold">${currentPage} / ${totalPages}</span>`;
+        if (currentPage < totalPages) {
+            html += `<button onclick="changePage(${currentPage + 1})" class="px-3 py-1 border rounded bg-white">Next</button>`;
+        }
+        paginationControls.innerHTML = html;
+    }
+
+    window.changePage = function(page) {
+        currentPage = page;
+        loadData();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function loadData() {
         const list = document.getElementById('libraryList');
+        const paginationControls = document.getElementById('paginationControls');
         list.innerHTML = '<p class="text-center text-gray-500 py-10">Loading...</p>';
+        if (paginationControls) paginationControls.innerHTML = '';
 
         const headers = {};
         if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
 
-        fetch(`/api/library.php?tab=${currentTab}`, { headers })
+        fetch(`/api/library.php?tab=${currentTab}&page=${currentPage}`, { headers })
             .then(res => res.json())
             .then(data => {
                 if (data.error) {
@@ -57,6 +87,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     `;
                 }).join('');
+
+                if (data.totalPages) {
+                    renderPagination(data.totalPages);
+                }
             })
             .catch(err => {
                 list.innerHTML = '<p class="text-center text-red-500 py-10">Failed to load data.</p>';

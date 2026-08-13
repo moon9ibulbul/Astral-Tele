@@ -53,14 +53,40 @@ if ($method === 'GET') {
     $countStmt->execute($params);
     $total = $countStmt->fetchColumn();
 
-    $sql = "SELECT DISTINCT c.* FROM comics c $join $whereSql ORDER BY c.id DESC LIMIT $limit OFFSET $offset";
+    // To order by latest chapter, we need to join or subquery the max created_at from chapters
+    // For sorting, if a comic has no chapters, it will be placed at the bottom.
+    $sql = "
+        SELECT c.*
+        FROM comics c
+        $join
+        $whereSql
+        ORDER BY (
+            SELECT MAX(created_at) FROM chapters WHERE comic_id = c.id
+        ) DESC, c.id DESC
+        LIMIT $limit OFFSET $offset
+    ";
+
+    // Note: if $join contains DISTINCT c.id in count, we might need DISTINCT in SELECT if there are duplicate categories joined
+    if ($category) {
+        $sql = "
+            SELECT DISTINCT c.*
+            FROM comics c
+            $join
+            $whereSql
+            ORDER BY (
+                SELECT MAX(created_at) FROM chapters WHERE comic_id = c.id
+            ) DESC, c.id DESC
+            LIMIT $limit OFFSET $offset
+        ";
+    }
+
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     $comics = $stmt->fetchAll();
     
     // Fetch latest 2 chapters and categories for each comic
     foreach ($comics as &$comic) {
-        $chStmt = $db->prepare("SELECT id, chapter_number, title FROM chapters WHERE comic_id = ? ORDER BY chapter_number DESC LIMIT 2");
+        $chStmt = $db->prepare("SELECT id, chapter_number, title, created_at FROM chapters WHERE comic_id = ? ORDER BY chapter_number DESC LIMIT 2");
         $chStmt->execute([$comic['id']]);
         $comic['latest_chapters'] = $chStmt->fetchAll();
 

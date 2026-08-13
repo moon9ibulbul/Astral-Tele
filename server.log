@@ -1,123 +1,82 @@
-[Thu Aug 13 14:45:25 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
-[Thu Aug 13 14:46:22 2026] [::1]:48658 Accepted
-[Thu Aug 13 14:46:22 2026] PHP Warning:  require_once(/app/vendor/autoload.php): Failed to open stream: No such file or directory in /app/s3.php on line 2
-[Thu Aug 13 14:46:22 2026] PHP Fatal error:  Uncaught Error: Failed opening required '/app/vendor/autoload.php' (include_path='.:/usr/share/php') in /app/s3.php:2
-Stack trace:
-#0 /app/api/comics.php(4): require_once()
-#1 {main}
-  thrown in /app/s3.php on line 2
-[Thu Aug 13 14:46:22 2026] [::1]:48658 [500]: GET /api/comics.php?page=1&limit=10 - Uncaught Error: Failed opening required '/app/vendor/autoload.php' (include_path='.:/usr/share/php') in /app/s3.php:2
-Stack trace:
-#0 /app/api/comics.php(4): require_once()
-#1 {main}
-  thrown in /app/s3.php on line 2
-[Thu Aug 13 14:46:22 2026] [::1]:48658 Closing
-[Thu Aug 13 14:46:39 2026] [::1]:41920 Accepted
-[Thu Aug 13 14:46:39 2026] PHP Warning:  require_once(/app/vendor/autoload.php): Failed to open stream: No such file or directory in /app/s3.php on line 2
-[Thu Aug 13 14:46:39 2026] PHP Fatal error:  Uncaught Error: Failed opening required '/app/vendor/autoload.php' (include_path='.:/usr/share/php') in /app/s3.php:2
-Stack trace:
-#0 /app/api/comics.php(4): require_once()
-#1 {main}
-  thrown in /app/s3.php on line 2
-[Thu Aug 13 14:46:39 2026] [::1]:41920 [500]: GET /api/comics.php?page=1&limit=10 - Uncaught Error: Failed opening required '/app/vendor/autoload.php' (include_path='.:/usr/share/php') in /app/s3.php:2
-Stack trace:
-#0 /app/api/comics.php(4): require_once()
-#1 {main}
-  thrown in /app/s3.php on line 2
-[Thu Aug 13 14:46:39 2026] [::1]:41920 Closing
-[Thu Aug 13 14:47:39 2026] [::1]:42194 Accepted
-[Thu Aug 13 14:47:39 2026] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1698] Access denied for user 'root'@'localhost' in /app/db.php:17
-Stack trace:
-#0 /app/api/comics.php(8): getDbConnection()
-#1 {main}
-  thrown in /app/db.php on line 17
-[Thu Aug 13 14:47:39 2026] [::1]:42194 [500]: GET /api/comics.php?page=1&limit=10 - Uncaught PDOException: SQLSTATE[HY000] [1698] Access denied for user 'root'@'localhost' in /app/db.php:17
-Stack trace:
-#0 /app/api/comics.php(8): getDbConnection()
-#1 {main}
-  thrown in /app/db.php on line 17
-[Thu Aug 13 14:47:39 2026] [::1]:42194 Closing
-[Thu Aug 13 14:48:53 2026] [::1]:48664 Accepted
-[Thu Aug 13 14:48:53 2026] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1698] Access denied for user 'root'@'localhost' in /app/db.php:17
-Stack trace:
-#0 /app/api/comics.php(8): getDbConnection()
-#1 {main}
-  thrown in /app/db.php on line 17
-[Thu Aug 13 14:48:53 2026] [::1]:48664 [500]: GET /api/comics.php?page=1&limit=10 - Uncaught PDOException: SQLSTATE[HY000] [1698] Access denied for user 'root'@'localhost' in /app/db.php:17
-Stack trace:
-#0 /app/api/comics.php(8): getDbConnection()
-#1 {main}
-  thrown in /app/db.php on line 17
-[Thu Aug 13 14:48:53 2026] [::1]:48664 Closing
-[Thu Aug 13 14:49:59 2026] [::1]:54722 Accepted
-[Thu Aug 13 14:49:59 2026] [::1]:54722 [200]: GET /api/comics.php?page=1&limit=10
-[Thu Aug 13 14:49:59 2026] [::1]:54722 Closing
-[Thu Aug 13 14:50:36 2026] [::1]:56016 Accepted
-[Thu Aug 13 14:50:36 2026] [::1]:56016 [200]: GET /api/comics.php?page=1&limit=10
-[Thu Aug 13 14:50:36 2026] [::1]:56016 Closing
-[Thu Aug 13 14:52:23 2026] [::1]:36580 Accepted
-[Thu Aug 13 14:52:23 2026] [::1]:36580 [200]: GET /index.html
-[Thu Aug 13 14:52:23 2026] [::1]:36580 Closing
-[Thu Aug 13 14:52:23 2026] [::1]:36588 Accepted
-[Thu Aug 13 14:52:23 2026] [::1]:36588 [200]: GET /js/app.js
-[Thu Aug 13 14:52:23 2026] [::1]:36588 Closing
-[Thu Aug 13 14:52:24 2026] [::1]:36594 Accepted
-[Thu Aug 13 14:52:24 2026] [::1]:36596 Accepted
-[Thu Aug 13 14:52:24 2026] [::1]:36594 [200]: GET /api/categories.php
-[Thu Aug 13 14:52:24 2026] [::1]:36594 Closing
-[Thu Aug 13 14:52:24 2026] [::1]:36596 [200]: GET /api/comics.php?page=1&limit=10
-[Thu Aug 13 14:52:24 2026] [::1]:36596 Closing
-[Thu Aug 13 14:52:26 2026] [::1]:40998 Accepted
-[Thu Aug 13 14:52:26 2026] [::1]:40998 [200]: GET /detail.html?id=1
-[Thu Aug 13 14:52:26 2026] [::1]:40998 Closing
-[Thu Aug 13 14:52:26 2026] [::1]:41000 Accepted
-[Thu Aug 13 14:52:26 2026] [::1]:41012 Accepted
-[Thu Aug 13 14:52:26 2026] [::1]:41000 [200]: GET /js/detail.js
-[Thu Aug 13 14:52:26 2026] [::1]:41012 [200]: GET /js/app.js
-[Thu Aug 13 14:52:26 2026] [::1]:41000 Closing
-[Thu Aug 13 14:52:26 2026] [::1]:41012 Closing
-[Thu Aug 13 14:52:26 2026] [::1]:41016 Accepted
-[Thu Aug 13 14:52:26 2026] [::1]:41016 [200]: GET /api/comics.php?id=1
-[Thu Aug 13 14:52:26 2026] [::1]:41016 Closing
-[Thu Aug 13 14:52:26 2026] [::1]:41020 Accepted
-[Thu Aug 13 14:52:26 2026] [::1]:41022 Accepted
-[Thu Aug 13 14:52:26 2026] [::1]:41034 Accepted
-[Thu Aug 13 14:52:26 2026] [::1]:41048 Accepted
-[Thu Aug 13 14:52:26 2026] [::1]:41020 [200]: GET /api/bookmarks.php?comic_id=1
-[Thu Aug 13 14:52:26 2026] [::1]:41020 Closing
-[Thu Aug 13 14:52:26 2026] [::1]:41022 [200]: GET /api/chapters.php?comic_id=1
-[Thu Aug 13 14:52:26 2026] [::1]:41022 Closing
-[Thu Aug 13 14:52:26 2026] [::1]:41034 [200]: GET /api/history.php?comic_id=1
-[Thu Aug 13 14:52:26 2026] [::1]:41034 Closing
-[Thu Aug 13 14:52:26 2026] [::1]:41048 [200]: GET /api/reviews.php?comic_id=1
-[Thu Aug 13 14:52:26 2026] [::1]:41048 Closing
-[Thu Aug 13 14:52:27 2026] [::1]:41052 Accepted
-[Thu Aug 13 14:52:27 2026] [::1]:41052 [200]: GET /reader.html?id=3&comic_id=1
-[Thu Aug 13 14:52:27 2026] [::1]:41052 Closing
-[Thu Aug 13 14:52:27 2026] [::1]:41060 Accepted
-[Thu Aug 13 14:52:27 2026] [::1]:41060 [200]: GET /js/reader.js
-[Thu Aug 13 14:52:27 2026] [::1]:41060 Closing
-[Thu Aug 13 14:52:28 2026] [::1]:41074 Accepted
-[Thu Aug 13 14:52:28 2026] [::1]:41076 Accepted
-[Thu Aug 13 14:52:28 2026] [::1]:41080 Accepted
-[Thu Aug 13 14:52:28 2026] [::1]:41074 [200]: GET /api/chapters.php?comic_id=1
-[Thu Aug 13 14:52:28 2026] [::1]:41074 Closing
-[Thu Aug 13 14:52:28 2026] [::1]:41076 [200]: GET /api/comics.php?id=1
-[Thu Aug 13 14:52:28 2026] [::1]:41076 Closing
-[Thu Aug 13 14:52:28 2026] [::1]:41080 [200]: GET /api/reviews.php?comic_id=1
-[Thu Aug 13 14:52:28 2026] [::1]:41080 Closing
-[Thu Aug 13 14:52:28 2026] [::1]:41092 Accepted
-[Thu Aug 13 14:52:28 2026] [::1]:41108 Accepted
-[Thu Aug 13 14:52:28 2026] [::1]:41092 [200]: POST /api/history.php
-[Thu Aug 13 14:52:28 2026] [::1]:41092 Closing
-[Thu Aug 13 14:52:28 2026] [::1]:41116 Accepted
-[Thu Aug 13 14:52:28 2026] [::1]:41108 [200]: GET /api/chapters.php?id=3
-[Thu Aug 13 14:52:28 2026] [::1]:41108 Closing
-[Thu Aug 13 14:52:28 2026] [::1]:41116 [200]: GET /api/reactions.php?chapter_id=3
-[Thu Aug 13 14:52:28 2026] [::1]:41116 Closing
-[Thu Aug 13 14:52:29 2026] [::1]:41120 Accepted
-[Thu Aug 13 14:52:29 2026] [::1]:41120 [200]: POST /api/reactions.php
-[Thu Aug 13 14:52:29 2026] [::1]:41120 Closing
-[Thu Aug 13 14:52:29 2026] [::1]:41132 Accepted
-[Thu Aug 13 14:52:29 2026] [::1]:41132 [200]: GET /api/reactions.php?chapter_id=3
-[Thu Aug 13 14:52:29 2026] [::1]:41132 Closing
+[Thu Aug 13 15:39:07 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
+[Thu Aug 13 15:39:28 2026] [::1]:59042 Accepted
+[Thu Aug 13 15:39:28 2026] [::1]:59042 [200]: GET /index.html
+[Thu Aug 13 15:39:28 2026] [::1]:59042 Closing
+[Thu Aug 13 15:39:28 2026] [::1]:59048 Accepted
+[Thu Aug 13 15:39:28 2026] [::1]:59062 Accepted
+[Thu Aug 13 15:39:28 2026] [::1]:59048 [200]: GET /js/notification_bell.js
+[Thu Aug 13 15:39:28 2026] [::1]:59062 [200]: GET /js/app.js
+[Thu Aug 13 15:39:28 2026] [::1]:59048 Closing
+[Thu Aug 13 15:39:28 2026] [::1]:59062 Closing
+[Thu Aug 13 15:39:29 2026] [::1]:59074 Accepted
+[Thu Aug 13 15:39:29 2026] [::1]:59084 Accepted
+[Thu Aug 13 15:39:29 2026] [::1]:59094 Accepted
+[Thu Aug 13 15:39:29 2026] [::1]:59074 [200]: GET /api/notifications.php?action=count
+[Thu Aug 13 15:39:29 2026] [::1]:59074 Closing
+[Thu Aug 13 15:39:29 2026] [::1]:59084 [200]: GET /api/categories.php
+[Thu Aug 13 15:39:29 2026] [::1]:59084 Closing
+[Thu Aug 13 15:39:29 2026] [::1]:59094 [200]: GET /api/comics.php?page=1&limit=10
+[Thu Aug 13 15:39:29 2026] [::1]:59094 Closing
+[Thu Aug 13 15:39:31 2026] [::1]:59110 Accepted
+[Thu Aug 13 15:39:31 2026] [::1]:59110 [200]: GET /detail.html?id=2
+[Thu Aug 13 15:39:31 2026] [::1]:59110 Closing
+[Thu Aug 13 15:39:31 2026] [::1]:59118 Accepted
+[Thu Aug 13 15:39:31 2026] [::1]:59120 Accepted
+[Thu Aug 13 15:39:31 2026] [::1]:59134 Accepted
+[Thu Aug 13 15:39:31 2026] [::1]:59118 [200]: GET /js/detail.js
+[Thu Aug 13 15:39:31 2026] [::1]:59120 [200]: GET /js/notification_bell.js
+[Thu Aug 13 15:39:31 2026] [::1]:59134 [200]: GET /js/app.js
+[Thu Aug 13 15:39:31 2026] [::1]:59118 Closing
+[Thu Aug 13 15:39:31 2026] [::1]:59120 Closing
+[Thu Aug 13 15:39:31 2026] [::1]:59134 Closing
+[Thu Aug 13 15:39:31 2026] [::1]:59144 Accepted
+[Thu Aug 13 15:39:31 2026] [::1]:59146 Accepted
+[Thu Aug 13 15:39:31 2026] [::1]:59152 Accepted
+[Thu Aug 13 15:39:31 2026] [::1]:59158 Accepted
+[Thu Aug 13 15:39:31 2026] [::1]:59160 Accepted
+[Thu Aug 13 15:39:31 2026] [::1]:59162 Accepted
+[Thu Aug 13 15:39:31 2026] [::1]:59144 [200]: GET /api/notifications.php?action=count
+[Thu Aug 13 15:39:31 2026] [::1]:59144 Closing
+[Thu Aug 13 15:39:31 2026] [::1]:59146 [200]: GET /api/comics.php?id=2
+[Thu Aug 13 15:39:31 2026] [::1]:59146 Closing
+[Thu Aug 13 15:39:31 2026] [::1]:59152 [200]: GET /api/bookmarks.php?comic_id=2
+[Thu Aug 13 15:39:31 2026] [::1]:59152 Closing
+[Thu Aug 13 15:39:31 2026] [::1]:59158 [200]: GET /api/chapters.php?comic_id=2
+[Thu Aug 13 15:39:31 2026] [::1]:59158 Closing
+[Thu Aug 13 15:39:31 2026] [::1]:59160 [200]: GET /api/history.php?comic_id=2
+[Thu Aug 13 15:39:31 2026] [::1]:59160 Closing
+[Thu Aug 13 15:39:31 2026] [::1]:59162 [200]: GET /api/reviews.php?comic_id=2
+[Thu Aug 13 15:39:31 2026] [::1]:59162 Closing
+[Thu Aug 13 15:39:33 2026] [::1]:59170 Accepted
+[Thu Aug 13 15:39:33 2026] [::1]:59170 [200]: POST /api/reviews.php
+[Thu Aug 13 15:39:33 2026] [::1]:59170 Closing
+[Thu Aug 13 15:39:33 2026] [::1]:59184 Accepted
+[Thu Aug 13 15:39:33 2026] [::1]:59184 [200]: GET /api/reviews.php?comic_id=2
+[Thu Aug 13 15:39:33 2026] [::1]:59184 Closing
+[Thu Aug 13 15:39:35 2026] [::1]:59190 Accepted
+[Thu Aug 13 15:39:35 2026] [::1]:59190 [200]: GET /library.html
+[Thu Aug 13 15:39:35 2026] [::1]:59190 Closing
+[Thu Aug 13 15:39:35 2026] [::1]:59196 Accepted
+[Thu Aug 13 15:39:35 2026] [::1]:59200 Accepted
+[Thu Aug 13 15:39:35 2026] [::1]:59196 [200]: GET /js/library.js
+[Thu Aug 13 15:39:35 2026] [::1]:59200 [200]: GET /js/notification_bell.js
+[Thu Aug 13 15:39:35 2026] [::1]:59196 Closing
+[Thu Aug 13 15:39:35 2026] [::1]:59200 Closing
+[Thu Aug 13 15:39:35 2026] [::1]:59214 Accepted
+[Thu Aug 13 15:39:35 2026] [::1]:59214 [200]: GET /api/notifications.php?action=count
+[Thu Aug 13 15:39:35 2026] [::1]:59214 Closing
+[Thu Aug 13 15:39:35 2026] [::1]:59216 Accepted
+[Thu Aug 13 15:39:35 2026] [::1]:59216 [200]: GET /api/library.php?tab=history&page=1
+[Thu Aug 13 15:39:35 2026] [::1]:59216 Closing
+[Thu Aug 13 15:39:36 2026] [::1]:56712 Accepted
+[Thu Aug 13 15:39:36 2026] [::1]:56712 [200]: GET /api/library.php?tab=bookmarks&page=1
+[Thu Aug 13 15:39:36 2026] [::1]:56712 Closing
+[Thu Aug 13 15:39:37 2026] [::1]:56714 Accepted
+[Thu Aug 13 15:39:37 2026] [::1]:56714 [200]: GET /notifications.html
+[Thu Aug 13 15:39:37 2026] [::1]:56714 Closing
+[Thu Aug 13 15:39:37 2026] [::1]:56718 Accepted
+[Thu Aug 13 15:39:37 2026] [::1]:56718 [200]: GET /js/notifications.js
+[Thu Aug 13 15:39:37 2026] [::1]:56718 Closing
+[Thu Aug 13 15:39:37 2026] [::1]:56726 Accepted
+[Thu Aug 13 15:39:37 2026] [::1]:56726 [200]: GET /api/notifications.php?action=list
+[Thu Aug 13 15:39:37 2026] [::1]:56726 Closing
