@@ -38,3 +38,21 @@ function uploadToS3($file, $destinationKey) {
         return false;
     }
 }
+
+function getPresignedUrl($key, $expiration = '+20 minutes') {
+    global $config;
+    $s3 = getS3Client();
+
+    try {
+        $cmd = $s3->getCommand('GetObject', [
+            'Bucket' => $config['s3']['bucket'],
+            'Key'    => $key
+        ]);
+
+        $request = $s3->createPresignedRequest($cmd, $expiration);
+        return (string) $request->getUri();
+    } catch (Exception $e) {
+        error_log($e->getMessage());
+        return null;
+    }
+}

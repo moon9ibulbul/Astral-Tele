@@ -11,6 +11,132 @@ document.addEventListener('DOMContentLoaded', () => {
     let allChapters = [];
     let currentChapterIndex = -1;
 
+    // Fetch single chapter for content
+    function fetchCurrentChapter() {
+        const headers = {};
+        const tg = window.Telegram && window.Telegram.WebApp;
+        if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+
+        fetch(`/api/chapters.php?id=${chapterId}`, { headers })
+            .then(res => res.json())
+            .then(chapter => {
+                if (chapter.error) {
+                    document.getElementById('loadingIndicator').innerText = chapter.error;
+                    return;
+                }
+
+                if (chapter.is_adult == 1) {
+                    // Check if already accepted adult warning in this session
+                    if (!sessionStorage.getItem(`adult_accepted_${chapterId}`)) {
+                        if (confirm('Chapter ini memuat konten untuk dewasa, tekan OK jika kamu sudah berusia di atas 18 Tahun')) {
+                            sessionStorage.setItem(`adult_accepted_${chapterId}`, '1');
+                        } else {
+                            window.history.back();
+                            return;
+                        }
+                    }
+                }
+
+                if (chapter.locked) {
+                    showLockScreen(chapter);
+                } else {
+                    loadPDF(chapter.pdf_url);
+                }
+            })
+            .catch(() => {
+                document.getElementById('loadingIndicator').innerText = "Failed to load chapter data.";
+            });
+    }
+
+    function showLockScreen(chapter) {
+        const indicator = document.getElementById('loadingIndicator');
+        const container = document.getElementById('readerContainer');
+        indicator.style.display = 'none';
+
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-20 px-4 text-center">
+                <div class="text-4xl mb-4">🔒</div>
+                <h2 class="text-xl font-bold mb-2">Chapter Locked</h2>
+                <p class="text-gray-400 mb-6">You need to unlock this chapter to read it.</p>
+
+                ${chapter.has_password ? `
+                    <div class="mb-4">
+                        <input type="password" id="unlockPassword" placeholder="Enter Password" class="border rounded p-2 text-black mb-2 outline-none">
+                        <br>
+                        <button onclick="unlockChapter('password')" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Unlock</button>
+                    </div>
+                ` : ''}
+
+                ${chapter.price > 0 ? `
+                    <div>
+                        <button onclick="unlockChapter('stars')" class="bg-yellow-600 text-white px-6 py-2 rounded hover:bg-yellow-700">
+                            Pay ${chapter.price} ⭐ to Unlock
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    window.unlockChapter = function(method) {
+        const fd = new FormData();
+        fd.append('chapter_id', chapterId);
+        fd.append('method', method);
+
+        if (method === 'password') {
+            const pwd = document.getElementById('unlockPassword').value;
+            if (!pwd) return alert('Enter password');
+            fd.append('password', pwd);
+            submitUnlock(fd);
+        } else if (method === 'stars') {
+            // Fetch invoice
+            const headers = {};
+            const tg = window.Telegram && window.Telegram.WebApp;
+            if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+
+            fetch('/api/invoice.php', { method: 'POST', headers, body: fd })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        if (tg && tg.openInvoice) {
+                            tg.openInvoice(data.url, function(status) {
+                                if (status == 'paid') {
+                                    submitUnlock(fd);
+                                } else {
+                                    alert('Payment failed or cancelled.');
+                                }
+                            });
+                        } else if (data.mock) {
+                            // Local testing fallback
+                            alert('Mock payment successful!');
+                            submitUnlock(fd);
+                        } else {
+                            alert('Telegram WebApp is not available to process payment.');
+                        }
+                    } else {
+                        alert(data.error || 'Failed to generate invoice.');
+                    }
+                });
+        }
+    }
+
+    function submitUnlock(fd) {
+        const headers = {};
+        const tg = window.Telegram && window.Telegram.WebApp;
+        if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+
+        fetch('/api/unlock.php', { method: 'POST', headers, body: fd })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('readerContainer').innerHTML = '<div id="loadingIndicator" class="text-center py-20 text-gray-400">Loading PDF...</div>';
+                    fetchCurrentChapter(); // reload
+                } else {
+                    alert(data.error || 'Unlock failed');
+                }
+            });
+    }
+
     // Fetch chapter list to handle prev/next navigation
     fetch(`/api/chapters.php?comic_id=${comicId}`)
         .then(res => res.json())
@@ -36,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 updateNavigationButtons();
-                loadPDF(chapter.pdf_url);
+                fetchCurrentChapter();
             } else {
                 document.getElementById('loadingIndicator').innerText = "Chapter not found.";
             }

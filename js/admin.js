@@ -119,29 +119,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const comicId = document.getElementById('chapterComicSelect').value;
             if(!comicId) return alert("Select a comic first.");
             
-            const num = prompt("Enter Chapter Number:");
-            if(num) {
-                const fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.accept = 'application/pdf';
-                fileInput.onchange = e => {
-                    const file = e.target.files[0];
-                    if (!file) return;
+            document.getElementById('chapterForm').reset();
+            document.getElementById('chapterComicIdInput').value = comicId;
+            document.getElementById('chapterModal').classList.remove('hidden');
+        });
 
-                    const fd = new FormData();
-                    fd.append('comic_id', comicId);
-                    fd.append('chapter_number', num);
-                    fd.append('pdf', file);
-                    
-                    fetch('/api/chapters.php', { method: 'POST', headers, body: fd })
-                        .then(res => res.json())
-                        .then(data => {
-                            if(data.success) loadChapters(comicId);
-                            else alert('Error: ' + data.error);
-                        });
-                };
-                fileInput.click();
+        document.getElementById('closeChapterModalBtn').addEventListener('click', () => {
+            document.getElementById('chapterModal').classList.add('hidden');
+        });
+
+        document.getElementById('chapterForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const comicId = document.getElementById('chapterComicIdInput').value;
+
+            const fd = new FormData(e.target);
+            if (!document.getElementById('chapterAdultInput').checked) {
+                fd.append('is_adult', '0');
             }
+
+            fetch('/api/chapters.php', { method: 'POST', headers, body: fd })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        document.getElementById('chapterModal').classList.add('hidden');
+                        loadChapters(comicId);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
         });
     }
 
