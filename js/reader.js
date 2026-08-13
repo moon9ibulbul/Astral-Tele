@@ -21,7 +21,19 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (currentChapterIndex !== -1) {
                 const chapter = allChapters[currentChapterIndex];
-                document.getElementById('chapterTitle').innerText = `Chapter ${chapter.chapter_number} ${chapter.title ? '- ' + chapter.title : ''}`;
+
+                const dropdown = document.getElementById('chapterDropdown');
+                if (dropdown) {
+                    dropdown.innerHTML = allChapters.map(ch =>
+                        `<option value="${ch.id}" ${ch.id == chapterId ? 'selected' : ''}>Chapter ${ch.chapter_number} ${ch.title ? '- ' + ch.title : ''}</option>`
+                    ).join('');
+
+                    dropdown.addEventListener('change', (e) => {
+                        if (e.target.value && e.target.value != chapterId) {
+                            window.location.href = `reader.html?id=${e.target.value}&comic_id=${comicId}`;
+                        }
+                    });
+                }
                 
                 updateNavigationButtons();
                 loadPDF(chapter.pdf_url);
@@ -79,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                         <p class="text-gray-800 whitespace-pre-wrap">${escapeHTML(thread.content)}</p>
+                        ${thread.image_url ? `<img src="${escapeHTML(thread.image_url)}" class="mt-2 max-w-full h-auto rounded border">` : ''}
                     </div>
                 `).join('');
             });
@@ -86,16 +99,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadReviews();
 
+    const reviewImageInput = document.getElementById('reviewImage');
+    const reviewImageLabel = document.getElementById('reviewImageLabel');
+    if (reviewImageInput && reviewImageLabel) {
+        reviewImageInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                reviewImageLabel.innerText = e.target.files[0].name;
+            } else {
+                reviewImageLabel.innerText = 'Attach Image';
+            }
+        });
+    }
+
     const submitReviewBtn = document.getElementById('submitReviewBtn');
     if (submitReviewBtn) {
         submitReviewBtn.addEventListener('click', () => {
             const content = document.getElementById('reviewContent').value;
             if (!content) return alert('Comment content is required');
+            const imageFile = document.getElementById('reviewImage').files[0];
 
             const fd = new FormData();
             fd.append('action', 'add');
             fd.append('comic_id', comicId);
             fd.append('content', `[Chapter ${chapterId}] ` + content);
+            if (imageFile) fd.append('image', imageFile);
 
             const headers = {};
             const tg = window.Telegram && window.Telegram.WebApp;
@@ -106,6 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(data => {
                     if (data.success) {
                         document.getElementById('reviewContent').value = '';
+                        document.getElementById('reviewImage').value = '';
+                        if (reviewImageLabel) reviewImageLabel.innerText = 'Attach Image';
                         loadReviews();
                     } else {
                         alert(data.error || 'Failed to submit comment. Ensure you are authenticated.');
@@ -155,18 +184,26 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
                 const page = await pdfDoc.getPage(pageNum);
                 
-                // Set scale based on container width or use fixed scale
-                const viewport = page.getViewport({ scale: 1.5 }); // Base scale
+                // Determine the scale based on container width to make it 100% full width
+                const unscaledViewport = page.getViewport({ scale: 1 });
+                const containerWidth = container.clientWidth;
+                const scale = containerWidth / unscaledViewport.width;
+                const viewport = page.getViewport({ scale: scale });
                 
                 // Create canvas and wrapper
                 const wrapper = document.createElement('div');
                 wrapper.className = 'page-container';
+                wrapper.style.width = '100%';
                 
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                canvas.height = viewport.height;
+                // We use CSS for display width and canvas properties for resolution
+                canvas.style.width = '100%';
+                canvas.style.height = 'auto';
+
                 canvas.width = viewport.width;
+                canvas.height = viewport.height;
                 
                 // Render page on canvas
                 const renderContext = {
