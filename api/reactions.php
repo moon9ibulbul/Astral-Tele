@@ -76,12 +76,24 @@ if ($method === 'POST') {
         exit;
     }
 
-    $stmt = $db->prepare("
-        INSERT INTO chapter_reactions (chapter_id, user_id, reaction_type)
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE reaction_type = VALUES(reaction_type)
-    ");
-    $stmt->execute([$chapterId, $user['id'], $reactionType]);
+    // Check existing reaction
+    $checkStmt = $db->prepare("SELECT reaction_type FROM chapter_reactions WHERE chapter_id = ? AND user_id = ?");
+    $checkStmt->execute([$chapterId, $user['id']]);
+    $existing = $checkStmt->fetch();
+
+    if ($existing && $existing['reaction_type'] === $reactionType) {
+        // Toggle off: delete if exact same reaction is sent again
+        $delStmt = $db->prepare("DELETE FROM chapter_reactions WHERE chapter_id = ? AND user_id = ?");
+        $delStmt->execute([$chapterId, $user['id']]);
+    } else {
+        // Toggle on or update to new reaction
+        $stmt = $db->prepare("
+            INSERT INTO chapter_reactions (chapter_id, user_id, reaction_type)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE reaction_type = VALUES(reaction_type)
+        ");
+        $stmt->execute([$chapterId, $user['id'], $reactionType]);
+    }
 
     echo json_encode(['success' => true]);
     exit;

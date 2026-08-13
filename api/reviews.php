@@ -86,6 +86,16 @@ if ($method === 'POST') {
             exit;
         }
 
+        if (!$parentId) {
+            $checkStmt = $db->prepare("SELECT id FROM reviews WHERE comic_id = ? AND user_id = ? AND parent_id IS NULL");
+            $checkStmt->execute([$comicId, $user['id']]);
+            if ($checkStmt->fetch()) {
+                http_response_code(400);
+                echo json_encode(['error' => 'You have already reviewed this comic. Please edit your existing review instead.']);
+                exit;
+            }
+        }
+
         $imageUrl = null;
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
             $tmpName = $_FILES['image']['tmp_name'];
@@ -130,6 +140,50 @@ if ($method === 'POST') {
             dislikes = (SELECT COUNT(*) FROM review_likes WHERE review_id = ? AND type = 'dislike')
             WHERE id = ?
         ")->execute([$reviewId, $reviewId, $reviewId]);
+
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    if ($action === 'edit') {
+        $reviewId = $_POST['review_id'] ?? null;
+        $content = $_POST['content'] ?? '';
+        $rating = $_POST['rating'] ?? null;
+
+        if (!$reviewId || !$content) {
+            http_response_code(400);
+            echo json_encode(['error' => 'review_id and content required']);
+            exit;
+        }
+
+        // Verify ownership
+        $stmt = $db->prepare("SELECT id, comic_id, parent_id FROM reviews WHERE id = ? AND user_id = ?");
+        $stmt->execute([$reviewId, $user['id']]);
+        $review = $stmt->fetch();
+
+        if (!$review) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Not authorized to edit this review']);
+            exit;
+        }
+
+        if ($rating) {
+            $update = $db->prepare("UPDATE reviews SET content = ?, rating = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+            $update->execute([$content, $rating, $reviewId]);
+        } else {
+            $update = $db->prepare("UPDATE reviews SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+            $update->execute([$content, $reviewId]);
+        }
+
+        // Update average rating if it's a top-level review
+        if (!$review['parent_id']) {
+            $avgStmt = $db->prepare("SELECT AVG(rating) FROM reviews WHERE comic_id = ? AND parent_id IS NULL AND rating IS NOT NULL AND status = 'active'");
+            $avgStmt->execute([$review['comic_id']]);
+            $avgRating = $avgStmt->fetchColumn() ?? 0;
+
+            $updateComic = $db->prepare("UPDATE comics SET average_rating = ? WHERE id = ?");
+            $updateComic->execute([$avgRating, $review['comic_id']]);
+        }
 
         echo json_encode(['success' => true]);
         exit;

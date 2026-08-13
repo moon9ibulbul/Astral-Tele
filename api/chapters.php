@@ -69,7 +69,45 @@ if ($method === 'GET') {
     if ($comicId) {
         $stmt = $db->prepare("SELECT id, comic_id, chapter_number, title, is_adult, price, password IS NOT NULL AND password != '' as has_password, created_at FROM chapters WHERE comic_id = ? ORDER BY chapter_number DESC");
         $stmt->execute([$comicId]);
-        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        echo json_encode(['data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+        exit;
+    }
+
+    // For admin or general chapter listing
+    if (!$comicId && !$chapterId) {
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+        $offset = ($page - 1) * $limit;
+
+        $search = isset($_GET['search']) ? $_GET['search'] : '';
+
+        $whereSql = "";
+        $params = [];
+        if ($search) {
+            $whereSql = "WHERE c.title LIKE ?";
+            $params[] = "%$search%";
+        }
+
+        $countStmt = $db->prepare("SELECT COUNT(*) FROM chapters ch JOIN comics c ON ch.comic_id = c.id $whereSql");
+        $countStmt->execute($params);
+        $total = $countStmt->fetchColumn();
+
+        $sql = "
+            SELECT ch.id, ch.comic_id, ch.chapter_number, ch.title, ch.pdf_url, ch.created_at, c.title as comic_title
+            FROM chapters ch
+            JOIN comics c ON ch.comic_id = c.id
+            $whereSql
+            ORDER BY c.title ASC, ch.chapter_number DESC
+            LIMIT $limit OFFSET $offset
+        ";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+
+        echo json_encode([
+            'data' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'page' => $page,
+            'totalPages' => ceil($total / $limit)
+        ]);
         exit;
     }
     
