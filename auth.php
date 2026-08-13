@@ -31,6 +31,7 @@ function validateTelegramInitData($initData) {
 }
 
 function syncUser($userData) {
+    global $config;
     $db = getDbConnection();
     
     $stmt = $db->prepare("SELECT id, role FROM users WHERE id = ?");
@@ -42,14 +43,27 @@ function syncUser($userData) {
     $username = $userData['username'] ?? '';
     $photoUrl = $userData['photo_url'] ?? '';
 
+    $isAdmin = false;
+    if (isset($config['app']['admin_id']) && (string)$userData['id'] === (string)$config['app']['admin_id']) {
+        $isAdmin = true;
+    }
+
     if ($existingUser) {
         $updateStmt = $db->prepare("UPDATE users SET first_name = ?, last_name = ?, username = ?, photo_url = ? WHERE id = ?");
         $updateStmt->execute([$firstName, $lastName, $username, $photoUrl, $userData['id']]);
-        return ['id' => $userData['id'], 'role' => $existingUser['role']];
+
+        if ($isAdmin && $existingUser['role'] !== 'admin') {
+            $roleUpdateStmt = $db->prepare("UPDATE users SET role = 'admin' WHERE id = ?");
+            $roleUpdateStmt->execute([$userData['id']]);
+            return ['id' => $userData['id'], 'role' => 'admin'];
+        }
+
+        return ['id' => $userData['id'], 'role' => $isAdmin ? 'admin' : $existingUser['role']];
     } else {
-        $insertStmt = $db->prepare("INSERT INTO users (id, first_name, last_name, username, photo_url) VALUES (?, ?, ?, ?, ?)");
-        $insertStmt->execute([$userData['id'], $firstName, $lastName, $username, $photoUrl]);
-        return ['id' => $userData['id'], 'role' => 'user'];
+        $role = $isAdmin ? 'admin' : 'user';
+        $insertStmt = $db->prepare("INSERT INTO users (id, first_name, last_name, username, photo_url, role) VALUES (?, ?, ?, ?, ?, ?)");
+        $insertStmt->execute([$userData['id'], $firstName, $lastName, $username, $photoUrl, $role]);
+        return ['id' => $userData['id'], 'role' => $role];
     }
 }
 
