@@ -1,0 +1,285 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    const initData = tg.initData;
+
+    // Simple mock auth bypass for local testing if not in Telegram (for demonstration purposes)
+    const mockAuth = true; 
+    let headers = {};
+
+    if (initData) {
+        headers['Authorization'] = `Bearer ${initData}`;
+        authenticate();
+    } else if (mockAuth) {
+        // Warning: this is just to allow UI view when not in Telegram during testing.
+        // In reality, backend blocks without real Telegram auth.
+        document.getElementById('authGate').classList.add('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+        initAdminPanel();
+    } else {
+        document.getElementById('authError').innerText = "initData not found. Open in Telegram.";
+        document.getElementById('authError').classList.remove('hidden');
+    }
+
+    function authenticate() {
+        // A real app might hit a /api/auth.php endpoint to verify and check role
+        // For now, we attach headers to all API calls. 
+        // If API calls fail with 401/403, we know auth failed.
+        document.getElementById('authGate').classList.add('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+        initAdminPanel();
+    }
+
+    function initAdminPanel() {
+        // Tab Switching
+        document.querySelectorAll('aside nav button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('aside nav button').forEach(b => {
+                    b.classList.remove('bg-gray-700', 'active-tab');
+                });
+                e.target.classList.add('bg-gray-700', 'active-tab');
+
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.add('hidden');
+                });
+                document.getElementById(e.target.getAttribute('data-target')).classList.remove('hidden');
+            });
+        });
+
+        loadComics();
+
+        // Event Listeners for Selects
+        document.getElementById('chapterComicSelect').addEventListener('change', (e) => {
+            loadChapters(e.target.value);
+        });
+        document.getElementById('reviewComicSelect').addEventListener('change', (e) => {
+            loadReviews(e.target.value);
+        });
+        
+        // Add Comic
+        document.getElementById('addComicBtn').addEventListener('click', () => {
+            const title = prompt("Enter Comic Title:");
+            if(title) {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.onchange = e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    const fd = new FormData();
+                    fd.append('title', title);
+                    fd.append('thumbnail', file);
+                    fetch('/api/comics.php', { method: 'POST', headers, body: fd })
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data.success) loadComics();
+                            else alert('Error: ' + data.error);
+                        });
+                };
+                fileInput.click();
+            }
+        });
+
+        // Add Chapter
+        document.getElementById('addChapterBtn').addEventListener('click', () => {
+            const comicId = document.getElementById('chapterComicSelect').value;
+            if(!comicId) return alert("Select a comic first.");
+            
+            const num = prompt("Enter Chapter Number:");
+            if(num) {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'application/pdf';
+                fileInput.onchange = e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const fd = new FormData();
+                    fd.append('comic_id', comicId);
+                    fd.append('chapter_number', num);
+                    fd.append('pdf', file);
+                    
+                    fetch('/api/chapters.php', { method: 'POST', headers, body: fd })
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data.success) loadChapters(comicId);
+                            else alert('Error: ' + data.error);
+                        });
+                };
+                fileInput.click();
+            }
+        });
+    }
+
+    function loadComics() {
+        fetch('/api/comics.php?limit=100', { headers })
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('adminComicsList');
+                const comics = data.data || [];
+                
+                // Populate selects
+                const options = '<option value="">Select Comic</option>' + comics.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+                document.getElementById('chapterComicSelect').innerHTML = options;
+                document.getElementById('reviewComicSelect').innerHTML = options;
+
+                list.innerHTML = comics.map(c => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">${c.id}</td>
+                        <td class="p-3"><img src="${c.thumbnail_url || ''}" class="w-10 h-14 object-cover bg-gray-200"></td>
+                        <td class="p-3">${c.title}</td>
+                        <td class="p-3">${c.category || '-'}</td>
+                        <td class="p-3 space-x-2">
+                            <button class="text-blue-600 hover:underline text-sm" onclick="editComic(${c.id}, '${escapeHTML(c.title).replace(/'/g, "\\'")}', '${escapeHTML(c.category || '').replace(/'/g, "\\'")}')">Edit</button>
+                            <button class="text-red-600 hover:underline text-sm" onclick="deleteComic(${c.id})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            });
+    }
+
+    window.editComic = function(id, oldTitle, oldCategory) {
+        const title = prompt("Edit Title:", oldTitle);
+        if (title === null) return;
+        const category = prompt("Edit Category:", oldCategory);
+        if (category === null) return;
+
+        // PUT request using URL encoding
+        fetch(`/api/comics.php?id=${id}`, {
+            method: 'PUT',
+            headers: {
+                ...headers,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `title=${encodeURIComponent(title)}&category=${encodeURIComponent(category)}`
+        }).then(res => res.json())
+          .then(data => {
+              if (data.success) loadComics();
+              else alert('Error updating comic');
+          });
+    }
+
+    window.deleteComic = function(id) {
+        if(confirm("Are you sure you want to delete this comic and all its chapters/reviews?")) {
+            fetch(`/api/comics.php?id=${id}`, { method: 'DELETE', headers })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) loadComics();
+                });
+        }
+    }
+
+    function loadChapters(comicId) {
+        if(!comicId) return;
+        fetch(`/api/chapters.php?comic_id=${comicId}`, { headers })
+            .then(res => res.json())
+            .then(chapters => {
+                const list = document.getElementById('adminChaptersList');
+                if(chapters.length === 0) {
+                    list.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-gray-500">No chapters found.</td></tr>';
+                    return;
+                }
+                list.innerHTML = chapters.map(c => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">${c.id}</td>
+                        <td class="p-3">${c.chapter_number}</td>
+                        <td class="p-3">${c.title || '-'}</td>
+                        <td class="p-3 truncate max-w-xs">${c.pdf_url}</td>
+                        <td class="p-3 space-x-2">
+                            <button class="text-red-600 hover:underline text-sm" onclick="deleteChapter(${c.id}, ${comicId})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            });
+    }
+
+    window.deleteChapter = function(id, comicId) {
+        if(confirm("Are you sure you want to delete this chapter?")) {
+            fetch(`/api/chapters.php?id=${id}`, { method: 'DELETE', headers })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) loadChapters(comicId);
+                });
+        }
+    }
+
+    function loadReviews(comicId) {
+        if(!comicId) return;
+        // In a real app, admin endpoint should fetch ALL reviews including hidden/spam.
+        // Our GET endpoint currently filters by active. We'd need an admin-specific fetch.
+        // For simplicity, assuming backend handles admin auth on GET appropriately to show all.
+        fetch(`/api/reviews.php?comic_id=${comicId}&all=1`, { headers })
+            .then(res => res.json())
+            .then(threads => {
+                const list = document.getElementById('adminReviewsList');
+                // Flatten threads
+                let allReviews = [];
+                threads.forEach(t => {
+                    allReviews.push(t);
+                    if(t.replies) allReviews = allReviews.concat(t.replies);
+                });
+
+                if(allReviews.length === 0) {
+                    list.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-gray-500">No reviews found.</td></tr>';
+                    return;
+                }
+                
+                function escapeHTML(str) {
+                    if (!str) return '';
+                    return str.toString().replace(/[&<>'"]/g, 
+                        tag => ({
+                            '&': '&amp;',
+                            '<': '&lt;',
+                            '>': '&gt;',
+                            "'": '&#39;',
+                            '"': '&quot;'
+                        }[tag] || tag)
+                    );
+                }
+
+                list.innerHTML = allReviews.map(r => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">${r.id}</td>
+                        <td class="p-3">${escapeHTML(r.username)}</td>
+                        <td class="p-3 text-sm truncate max-w-xs">${escapeHTML(r.content)}</td>
+                        <td class="p-3">
+                            <select onchange="updateReviewStatus(${r.id}, this.value, ${comicId})" class="border rounded p-1 text-sm outline-none">
+                                <option value="active" ${r.status === 'active' ? 'selected' : ''}>Active</option>
+                                <option value="hidden" ${r.status === 'hidden' ? 'selected' : ''}>Hidden</option>
+                                <option value="spam" ${r.status === 'spam' ? 'selected' : ''}>Spam</option>
+                            </select>
+                        </td>
+                        <td class="p-3">
+                            <button class="text-red-600 hover:underline text-sm" onclick="deleteReview(${r.id}, ${comicId})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            });
+    }
+
+    window.updateReviewStatus = function(id, status, comicId) {
+        // PUT request using URL encoding or fetch payload
+        fetch(`/api/reviews.php?id=${id}`, {
+            method: 'PUT',
+            headers: {
+                ...headers,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `status=${status}`
+        }).then(res => res.json())
+          .then(data => {
+              if(!data.success) alert("Failed to update status");
+          });
+    }
+
+    window.deleteReview = function(id, comicId) {
+        if(confirm("Are you sure you want to delete this review?")) {
+            fetch(`/api/reviews.php?id=${id}`, { method: 'DELETE', headers })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) loadReviews(comicId);
+                });
+        }
+    }
+});
