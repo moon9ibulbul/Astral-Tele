@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS `reviews` (
     `status` ENUM('active', 'hidden', 'spam') DEFAULT 'active',
     `likes` INT DEFAULT 0,
     `dislikes` INT DEFAULT 0,
+    `is_read` BOOLEAN DEFAULT FALSE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`comic_id`) REFERENCES `comics`(`id`) ON DELETE CASCADE,

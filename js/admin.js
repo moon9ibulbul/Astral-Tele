@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const initData = tg.initData;
 
     // Simple mock auth bypass for local testing if not in Telegram (for demonstration purposes)
-    const mockAuth = true; 
+    const mockAuth = false;
     let headers = {};
 
     let currentAdminChapterPage = 1;
