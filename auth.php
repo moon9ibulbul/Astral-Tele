@@ -78,15 +78,44 @@ function syncUser($userData) {
     }
 }
 
+function getAuthorizationHeader() {
+    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        return $_SERVER['HTTP_AUTHORIZATION'];
+    }
+    if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        return $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    }
+    if (function_exists('getallheaders')) {
+        $headers = getallheaders();
+        if ($headers) {
+            foreach ($headers as $key => $value) {
+                if (strcasecmp($key, 'Authorization') === 0) {
+                    return $value;
+                }
+            }
+        }
+    }
+    if (function_exists('apache_request_headers')) {
+        $headers = apache_request_headers();
+        if ($headers) {
+            foreach ($headers as $key => $value) {
+                if (strcasecmp($key, 'Authorization') === 0) {
+                    return $value;
+                }
+            }
+        }
+    }
+    return null;
+}
+
 function getAuthenticatedUser() {
     // For local testing purposes where we can't easily fake Telegram initData
     if (php_sapi_name() === 'cli-server') {
         return ['id' => 1, 'role' => 'admin', 'is_banned' => 0, 'is_muted' => 0];
     }
 
-    $headers = getallheaders();
-    if (isset($headers['Authorization'])) {
-        $authHeader = $headers['Authorization'];
+    $authHeader = getAuthorizationHeader();
+    if ($authHeader) {
         if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
             $initData = $matches[1];
             $telegramUser = validateTelegramInitData($initData);
