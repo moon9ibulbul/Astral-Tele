@@ -133,6 +133,11 @@ function getAuthorizationHeader() {
         return $_POST['initData'];
     }
 
+    // Check cookie fallback
+    if (!empty($_COOKIE['tg_init_data'])) {
+        return $_COOKIE['tg_init_data'];
+    }
+
     return null;
 }
 

@@ -103,7 +103,7 @@ if (isset($_GET['step'])) {
 
             // Files to modify
             $files = [
-                'index.html', 'admin.html', 'detail.html', 'library.html',
+                'index.html', 'admin.php', 'detail.html', 'library.html',
                 'notifications.html', 'profile.html', 'quest.html', 'reader.html',
                 'js/detail.js'
             ];

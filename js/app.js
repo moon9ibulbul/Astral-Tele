@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Sync/Register user in database if accessing via Telegram
     if (initData) {
+        document.cookie = `tg_init_data=${encodeURIComponent(initData)}; path=/; max-age=86400; SameSite=Lax; Secure`;
+
         fetch('/api/profile.php', {
             headers: {
                 'Authorization': `Bearer ${initData}`,

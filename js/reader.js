@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         return;
+    } else {
+        document.cookie = `tg_init_data=${encodeURIComponent(tg.initData)}; path=/; max-age=86400; SameSite=Lax; Secure`;
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -174,7 +176,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch chapter list to handle prev/next navigation
     fetch(`/api/chapters.php?comic_id=${comicId}`)
         .then(res => res.json())
-        .then(chapters => {
+        .then(chaptersResponse => {
+            const chapters = chaptersResponse.data || chaptersResponse || [];
             // Sort ascending by chapter_number for easy navigation
             allChapters = chapters.sort((a, b) => parseFloat(a.chapter_number) - parseFloat(b.chapter_number));
             currentChapterIndex = allChapters.findIndex(c => c.id == chapterId);

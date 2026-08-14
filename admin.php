@@ -1,3 +1,29 @@
+<?php
+require_once __DIR__ . '/auth.php';
+
+// Check if authenticated user is admin
+$user = getAuthenticatedUser();
+if (!$user || $user['role'] !== 'admin') {
+    http_response_code(403);
+    echo "<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <title>Akses Ditolak - Astral-Tele</title>
+    <script src=\"https://cdn.tailwindcss.com\"></script>
+</head>
+<body class=\"bg-gray-100 flex items-center justify-center min-h-screen text-gray-900 p-4\">
+    <div class=\"text-center bg-white p-8 rounded-lg shadow-lg max-w-md border border-gray-200\">
+        <div class=\"text-5xl mb-4\">🚫</div>
+        <h1 class=\"text-xl font-bold mb-2\">Akses Ditolak</h1>
+        <p class=\"text-sm text-gray-600\">Maaf, halaman ini hanya dapat diakses oleh Administrator.</p>
+    </div>
+</body>
+</html>";
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -386,6 +412,6 @@
         </div>
     </div>
 
-    <script src="js/admin.js"></script>
+    <script src="js/admin.js?v=1.0.2"></script>
 </body>
 </html>

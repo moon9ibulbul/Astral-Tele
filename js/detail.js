@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         return;
+    } else {
+        document.cookie = `tg_init_data=${encodeURIComponent(tg.initData)}; path=/; max-age=86400; SameSite=Lax; Secure`;
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -116,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-    const tg = window.Telegram && window.Telegram.WebApp;
     const headers = {};
     if (tg && tg.initData) {
         headers['Authorization'] = `Bearer ${tg.initData}`;
