@@ -412,6 +412,6 @@ if (!$user || $user['role'] !== 'admin') {
         </div>
     </div>
 
-    <script src="js/admin.js"></script>
+    <script src="js/admin.js?v=1.0.2"></script>
 </body>
 </html>
