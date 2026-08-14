@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.expand();
     const initData = tg.initData;
 
-    // Simple mock auth bypass for local testing if not in Telegram (for demonstration purposes)
-    const mockAuth = true; 
+    // Mock auth bypass is disabled by default for maximum security
+    const mockAuth = false;
     let headers = {};
 
     let currentAdminChapterPage = 1;
@@ -17,23 +17,42 @@ document.addEventListener('DOMContentLoaded', () => {
         headers['Authorization'] = `Bearer ${initData}`;
         authenticate();
     } else if (mockAuth) {
-        // Warning: this is just to allow UI view when not in Telegram during testing.
-        // In reality, backend blocks without real Telegram auth.
         document.getElementById('authGate').classList.add('hidden');
         document.getElementById('adminPanel').classList.remove('hidden');
         initAdminPanel();
     } else {
-        document.getElementById('authError').innerText = "initData not found. Open in Telegram.";
-        document.getElementById('authError').classList.remove('hidden');
+        showAuthError("Akses Ditolak: Halaman ini hanya dapat diakses melalui Telegram Mini App.");
     }
 
     function authenticate() {
-        // A real app might hit a /api/auth.php endpoint to verify and check role
-        // For now, we attach headers to all API calls. 
-        // If API calls fail with 401/403, we know auth failed.
-        document.getElementById('authGate').classList.add('hidden');
-        document.getElementById('adminPanel').classList.remove('hidden');
-        initAdminPanel();
+        // Fetch user profile from backend to verify admin authorization
+        fetch('/api/profile.php', { headers })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error("Authentication failed.");
+                }
+                return res.json();
+            })
+            .then(user => {
+                if (user && user.role === 'admin') {
+                    document.getElementById('authGate').classList.add('hidden');
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                    initAdminPanel();
+                } else {
+                    showAuthError("Akses Ditolak: Kamu tidak memiliki akses Administrator.");
+                }
+            })
+            .catch(err => {
+                showAuthError("Gagal melakukan autentikasi dengan server.");
+            });
+    }
+
+    function showAuthError(msg) {
+        document.getElementById('authGate').classList.remove('hidden');
+        document.getElementById('adminPanel').classList.add('hidden');
+        const errEl = document.getElementById('authError');
+        errEl.innerText = msg;
+        errEl.classList.remove('hidden');
     }
 
     function initAdminPanel() {

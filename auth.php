@@ -34,7 +34,7 @@ function syncUser($userData) {
     global $config;
     $db = getDbConnection();
     
-    $stmt = $db->prepare("SELECT id, role, is_banned, is_muted FROM users WHERE id = ?");
+    $stmt = $db->prepare("SELECT id, role, username, photo_url, is_banned, is_muted FROM users WHERE id = ?");
     $stmt->execute([$userData['id']]);
     $existingUser = $stmt->fetch();
     
@@ -49,8 +49,19 @@ function syncUser($userData) {
     }
 
     if ($existingUser) {
+        // Safe updates: do not overwrite non-empty database username/photo_url with empty/null from Telegram
+        $finalUsername = $existingUser['username'];
+        if ($username !== '') {
+            $finalUsername = $username;
+        }
+
+        $finalPhotoUrl = $existingUser['photo_url'];
+        if ($photoUrl !== '') {
+            $finalPhotoUrl = $photoUrl;
+        }
+
         $updateStmt = $db->prepare("UPDATE users SET first_name = ?, last_name = ?, username = ?, photo_url = ? WHERE id = ?");
-        $updateStmt->execute([$firstName, $lastName, $username, $photoUrl, $userData['id']]);
+        $updateStmt->execute([$firstName, $lastName, $finalUsername, $finalPhotoUrl, $userData['id']]);
 
         $role = $existingUser['role'];
         if ($isAdmin && $existingUser['role'] !== 'admin') {
@@ -85,8 +96,28 @@ function getAuthenticatedUser() {
     }
 
     $headers = getallheaders();
-    if (isset($headers['Authorization'])) {
-        $authHeader = $headers['Authorization'];
+    $authHeader = null;
+
+    // Check case-insensitively in getallheaders()
+    if (is_array($headers)) {
+        foreach ($headers as $key => $val) {
+            if (strtolower($key) === 'authorization') {
+                $authHeader = $val;
+                break;
+            }
+        }
+    }
+
+    // Fallbacks if header is stripped or redirected
+    if (!$authHeader) {
+        if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+        } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        }
+    }
+
+    if ($authHeader) {
         if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
             $initData = $matches[1];
             $telegramUser = validateTelegramInitData($initData);
