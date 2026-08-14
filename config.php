@@ -17,5 +17,8 @@ $config = [
     ],
     'telegram' => [
         'bot_token' => 'YOUR_TELEGRAM_BOT_TOKEN'
+    ],
+    'app' => [
+        'admin_id' => 'YOUR_TELEGRAM_ADMIN_ID'
     ]
 ];

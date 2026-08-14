@@ -34,7 +34,7 @@ function syncUser($userData) {
     global $config;
     $db = getDbConnection();
     
-    $stmt = $db->prepare("SELECT id, role, is_banned, is_muted FROM users WHERE id = ?");
+    $stmt = $db->prepare("SELECT id, username, photo_url, role, is_banned, is_muted FROM users WHERE id = ?");
     $stmt->execute([$userData['id']]);
     $existingUser = $stmt->fetch();
     
@@ -49,8 +49,12 @@ function syncUser($userData) {
     }
 
     if ($existingUser) {
+        // Prevent overwriting custom or existing non-empty usernames/photos with empty values from Telegram
+        $finalUsername = !empty($username) ? $username : (!empty($existingUser['username']) ? $existingUser['username'] : '');
+        $finalPhotoUrl = !empty($photoUrl) ? $photoUrl : (!empty($existingUser['photo_url']) ? $existingUser['photo_url'] : '');
+
         $updateStmt = $db->prepare("UPDATE users SET first_name = ?, last_name = ?, username = ?, photo_url = ? WHERE id = ?");
-        $updateStmt->execute([$firstName, $lastName, $username, $photoUrl, $userData['id']]);
+        $updateStmt->execute([$firstName, $lastName, $finalUsername, $finalPhotoUrl, $userData['id']]);
 
         $role = $existingUser['role'];
         if ($isAdmin && $existingUser['role'] !== 'admin') {
@@ -79,27 +83,44 @@ function syncUser($userData) {
 }
 
 function getAuthenticatedUser() {
-    // For local testing purposes where we can't easily fake Telegram initData
+    $headers = getallheaders();
+    $authHeader = null;
+
+    // Case-insensitive lookup for Authorization header
+    foreach ($headers as $key => $value) {
+        if (strcasecmp($key, 'Authorization') === 0) {
+            $authHeader = $value;
+            break;
+        }
+    }
+
+    // Fallback to PHP environment variables in case Apache/Nginx strips/modifies headers
+    if (!$authHeader) {
+        if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+        } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        }
+    }
+
+    if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+        $initData = $matches[1];
+        $telegramUser = validateTelegramInitData($initData);
+        if ($telegramUser) {
+            $user = syncUser($telegramUser);
+            if ($user && isset($user['is_banned']) && $user['is_banned']) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Your account has been banned.']);
+                exit;
+            }
+            return $user;
+        }
+    }
+
+    // Only fallback for local testing on CLI server when NO Authorization header was sent
     if (php_sapi_name() === 'cli-server') {
         return ['id' => 1, 'role' => 'admin', 'is_banned' => 0, 'is_muted' => 0];
     }
 
-    $headers = getallheaders();
-    if (isset($headers['Authorization'])) {
-        $authHeader = $headers['Authorization'];
-        if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-            $initData = $matches[1];
-            $telegramUser = validateTelegramInitData($initData);
-            if ($telegramUser) {
-                $user = syncUser($telegramUser);
-                if ($user && isset($user['is_banned']) && $user['is_banned']) {
-                    http_response_code(403);
-                    echo json_encode(['error' => 'Your account has been banned.']);
-                    exit;
-                }
-                return $user;
-            }
-        }
-    }
     return null;
 }
