@@ -34,7 +34,7 @@ function syncUser($userData) {
     global $config;
     $db = getDbConnection();
     
-    $stmt = $db->prepare("SELECT id, role FROM users WHERE id = ?");
+    $stmt = $db->prepare("SELECT id, role, is_banned, is_muted FROM users WHERE id = ?");
     $stmt->execute([$userData['id']]);
     $existingUser = $stmt->fetch();
     
@@ -52,25 +52,36 @@ function syncUser($userData) {
         $updateStmt = $db->prepare("UPDATE users SET first_name = ?, last_name = ?, username = ?, photo_url = ? WHERE id = ?");
         $updateStmt->execute([$firstName, $lastName, $username, $photoUrl, $userData['id']]);
 
+        $role = $existingUser['role'];
         if ($isAdmin && $existingUser['role'] !== 'admin') {
             $roleUpdateStmt = $db->prepare("UPDATE users SET role = 'admin' WHERE id = ?");
             $roleUpdateStmt->execute([$userData['id']]);
-            return ['id' => $userData['id'], 'role' => 'admin'];
+            $role = 'admin';
         }
 
-        return ['id' => $userData['id'], 'role' => $isAdmin ? 'admin' : $existingUser['role']];
+        return [
+            'id' => $userData['id'],
+            'role' => $role,
+            'is_banned' => (int)$existingUser['is_banned'],
+            'is_muted' => (int)$existingUser['is_muted']
+        ];
     } else {
         $role = $isAdmin ? 'admin' : 'user';
         $insertStmt = $db->prepare("INSERT INTO users (id, first_name, last_name, username, photo_url, role) VALUES (?, ?, ?, ?, ?, ?)");
         $insertStmt->execute([$userData['id'], $firstName, $lastName, $username, $photoUrl, $role]);
-        return ['id' => $userData['id'], 'role' => $role];
+        return [
+            'id' => $userData['id'],
+            'role' => $role,
+            'is_banned' => 0,
+            'is_muted' => 0
+        ];
     }
 }
 
 function getAuthenticatedUser() {
     // For local testing purposes where we can't easily fake Telegram initData
     if (php_sapi_name() === 'cli-server') {
-        return ['id' => 1, 'role' => 'admin'];
+        return ['id' => 1, 'role' => 'admin', 'is_banned' => 0, 'is_muted' => 0];
     }
 
     $headers = getallheaders();
@@ -80,7 +91,13 @@ function getAuthenticatedUser() {
             $initData = $matches[1];
             $telegramUser = validateTelegramInitData($initData);
             if ($telegramUser) {
-                return syncUser($telegramUser);
+                $user = syncUser($telegramUser);
+                if ($user && isset($user['is_banned']) && $user['is_banned']) {
+                    http_response_code(403);
+                    echo json_encode(['error' => 'Your account has been banned.']);
+                    exit;
+                }
+                return $user;
             }
         }
     }

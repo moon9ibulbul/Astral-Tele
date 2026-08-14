@@ -1,4 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Restrict access to Telegram Mini App only
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (!tg || !tg.initData) {
+        document.body.innerHTML = `
+            <div class="flex items-center justify-center min-h-screen bg-gray-100 text-gray-900 p-4">
+                <div class="text-center bg-white p-8 rounded-lg shadow-lg max-w-md border border-gray-200">
+                    <div class="text-5xl mb-4">🚫</div>
+                    <h1 class="text-xl font-bold mb-2">Akses Ditolak</h1>
+                    <p class="text-sm text-gray-600">Halaman ini hanya dapat diakses melalui Telegram Mini App.</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const comicId = urlParams.get('id');
 

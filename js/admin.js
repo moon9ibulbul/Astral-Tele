@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const mockAuth = true; 
     let headers = {};
 
+    let currentAdminChapterPage = 1;
+    let currentAdminChapterSearch = '';
+    let currentAdminChapterComicId = '';
+    let currentAdminUserPage = 1;
+    let currentAdminUserSearch = '';
+
     if (initData) {
         headers['Authorization'] = `Bearer ${initData}`;
         authenticate();
@@ -47,13 +53,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (targetId === 'categoriesTab') loadCategories();
                 if (targetId === 'questsTab') loadQuestsTab();
+                if (targetId === 'usersTab') {
+                    currentAdminUserPage = 1;
+                    currentAdminUserSearch = '';
+                    const searchInput = document.getElementById('adminUserSearch');
+                    if (searchInput) searchInput.value = '';
+                    loadUsers();
+                }
             });
         });
 
         initBackupUpdateTab();
 
         loadComics();
-        loadComicSelects();
         loadChapters();
 
         // Event Listeners for Selects
@@ -153,6 +165,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
         });
+
+        // Users Tab Search
+        const userSearchInput = document.getElementById('adminUserSearch');
+        const searchUsersBtn = document.getElementById('searchUsersBtn');
+        if (userSearchInput && searchUsersBtn) {
+            searchUsersBtn.addEventListener('click', () => {
+                currentAdminUserSearch = userSearchInput.value;
+                currentAdminUserPage = 1;
+                loadUsers();
+            });
+            userSearchInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    currentAdminUserSearch = userSearchInput.value;
+                    currentAdminUserPage = 1;
+                    loadUsers();
+                }
+            });
+        }
     }
 
     function loadComics() {
@@ -234,10 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
-    let currentAdminChapterPage = 1;
-    let currentAdminChapterSearch = '';
-    let currentAdminChapterComicId = '';
 
     const chapterSearchInput = document.getElementById('adminChapterSearch');
     if (chapterSearchInput) {
@@ -703,10 +729,132 @@ function loadReviews(comicId) {
         }
     }
 
+    function loadUsers() {
+        const list = document.getElementById('adminUsersList');
+        if (!list) return;
+
+        list.innerHTML = '<tr><td colspan="6" class="p-3 text-center text-gray-500">Loading users...</td></tr>';
+
+        let url = `/api/users.php?page=${currentAdminUserPage}`;
+        if (currentAdminUserSearch) {
+            url += `&search=${encodeURIComponent(currentAdminUserSearch)}`;
+        }
+
+        fetch(url, { headers })
+            .then(res => res.json())
+            .then(data => {
+                const users = data.data || [];
+                if (users.length === 0) {
+                    list.innerHTML = '<tr><td colspan="6" class="p-3 text-center text-gray-500">No users found.</td></tr>';
+                    renderAdminUserPagination(1);
+                    return;
+                }
+
+                list.innerHTML = users.map(u => {
+                    // Build status tags
+                    let statusTags = [];
+                    if (u.is_banned == 1) {
+                        statusTags.push('<span class="bg-red-100 text-red-800 text-xs font-semibold px-2 py-0.5 rounded mr-1">Banned</span>');
+                    }
+                    if (u.is_muted == 1) {
+                        statusTags.push('<span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded mr-1">Muted</span>');
+                    }
+                    if (statusTags.length === 0) {
+                        statusTags.push('<span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded mr-1">Active</span>');
+                    }
+
+                    const statusHtml = statusTags.join(' ');
+
+                    // Build actions buttons
+                    const banBtn = u.is_banned == 1
+                        ? `<button class="text-green-600 hover:underline text-sm font-medium" onclick="toggleUserStatus(${u.id}, 'unban')">Unban</button>`
+                        : `<button class="text-red-600 hover:underline text-sm font-medium" onclick="toggleUserStatus(${u.id}, 'ban')">Ban</button>`;
+
+                    const muteBtn = u.is_muted == 1
+                        ? `<button class="text-green-600 hover:underline text-sm font-medium" onclick="toggleUserStatus(${u.id}, 'unmute')">Unmute</button>`
+                        : `<button class="text-yellow-600 hover:underline text-sm font-medium" onclick="toggleUserStatus(${u.id}, 'mute')">Mute</button>`;
+
+                    const roleBadge = u.role === 'admin'
+                        ? '<span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded font-sans">Admin</span>'
+                        : '<span class="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded font-sans">User</span>';
+
+                    return `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3 font-mono text-sm">${u.id}</td>
+                            <td class="p-3">
+                                <img src="${u.photo_url || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover bg-gray-200">
+                            </td>
+                            <td class="p-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium">${escapeHTML(u.username || 'Anonymous')}</span>
+                                    ${roleBadge}
+                                </div>
+                            </td>
+                            <td class="p-3">${escapeHTML(u.first_name || '')} ${escapeHTML(u.last_name || '')}</td>
+                            <td class="p-3">${statusHtml}</td>
+                            <td class="p-3 space-x-3">
+                                ${banBtn}
+                                ${muteBtn}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                renderAdminUserPagination(data.totalPages || 1);
+            })
+            .catch(err => {
+                console.error(err);
+                list.innerHTML = '<tr><td colspan="6" class="p-3 text-center text-red-500">Failed to load users.</td></tr>';
+            });
+    }
+
+    function renderAdminUserPagination(totalPages) {
+        const controls = document.getElementById('adminUserPagination');
+        if (!controls) return;
+        if (totalPages <= 1) {
+            controls.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        if (currentAdminUserPage > 1) {
+            html += `<button onclick="changeAdminUserPage(${currentAdminUserPage - 1})" class="px-3 py-1 border rounded bg-white hover:bg-gray-50">Prev</button>`;
+        }
+        html += `<span class="px-3 py-1 font-bold">${currentAdminUserPage} / ${totalPages}</span>`;
+        if (currentAdminUserPage < totalPages) {
+            html += `<button onclick="changeAdminUserPage(${currentAdminUserPage + 1})" class="px-3 py-1 border rounded bg-white hover:bg-gray-50">Next</button>`;
+        }
+        controls.innerHTML = html;
+    }
+
+    window.changeAdminUserPage = function(page) {
+        currentAdminUserPage = page;
+        loadUsers();
+    };
+
+    window.toggleUserStatus = function(userId, action) {
+        if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+
+        const fd = new FormData();
+        fd.append('user_id', userId);
+        fd.append('action', action);
+
+        fetch('/api/users.php', { method: 'POST', headers, body: fd })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    loadUsers();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to perform action'));
+                }
+            })
+            .catch(err => alert('Network error: ' + err.message));
+    };
+
 });
 function escapeHTML(str) {
     if (!str) return '';
-    return str.toString().replace(/[&<>'"\]/g,
+    return str.toString().replace(/[&<>'"]/g,
         tag => ({
             '&': '&amp;',
             '<': '&lt;',

@@ -1,4 +1,0 @@
-[Fri Aug 14 02:19:43 2026] PHP 8.3.6 Development Server (http://127.0.0.1:8000) started
-[Fri Aug 14 02:20:16 2026] 127.0.0.1:40686 Accepted
-[Fri Aug 14 02:20:16 2026] 127.0.0.1:40686 [404]: GET /api/users.php - No such file or directory
-[Fri Aug 14 02:20:16 2026] 127.0.0.1:40686 Closing

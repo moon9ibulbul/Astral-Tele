@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS `users` (
     `last_name` VARCHAR(255) NULL,
     `photo_url` TEXT NULL,
     `role` ENUM('user', 'admin') DEFAULT 'user',
+    `is_banned` TINYINT(1) DEFAULT 0,
+    `is_muted` TINYINT(1) DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -24,6 +26,9 @@ CREATE TABLE IF NOT EXISTS `comics` (
     `synopsis` TEXT NULL,
     `thumbnail_url` TEXT NULL,
     `average_rating` DECIMAL(3, 2) DEFAULT 0.00,
+    `views` INT DEFAULT 0,
+    `year` INT NULL,
+    `status` ENUM('Ongoing', 'Completed', 'On Hold', 'Hiatus', 'Dropped') DEFAULT 'Ongoing',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -44,6 +49,7 @@ CREATE TABLE IF NOT EXISTS `chapters` (
     `pdf_url` TEXT NOT NULL,
     `is_adult` BOOLEAN DEFAULT FALSE,
     `password` VARCHAR(255) NULL,
+    `pdf_password` VARCHAR(255) NULL,
     `price` INT DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -77,6 +83,16 @@ CREATE TABLE IF NOT EXISTS `reading_history` (
     FOREIGN KEY (`chapter_id`) REFERENCES `chapters`(`id`) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS `chapter_reactions` (
+    `chapter_id` INT NOT NULL,
+    `user_id` BIGINT NOT NULL,
+    `reaction_type` ENUM('Happy', 'Sad', 'Laugh', 'Angry', 'Fire') NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`chapter_id`, `user_id`),
+    FOREIGN KEY (`chapter_id`) REFERENCES `chapters`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS `reviews` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `comic_id` INT NOT NULL,
@@ -102,5 +118,4 @@ CREATE TABLE IF NOT EXISTS `review_likes` (
     PRIMARY KEY (`review_id`, `user_id`),
     FOREIGN KEY (`review_id`) REFERENCES `reviews`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-);ALTER TABLE `comics` ADD COLUMN `views` INT DEFAULT 0, ADD COLUMN `year` INT NULL, ADD COLUMN `status` ENUM('Ongoing', 'Completed', 'On Hold', 'Hiatus', 'Dropped') DEFAULT 'Ongoing';
-CREATE TABLE IF NOT EXISTS `chapter_reactions` ( `chapter_id` INT NOT NULL, `user_id` BIGINT NOT NULL, `reaction_type` ENUM('Happy', 'Sad', 'Laugh', 'Angry', 'Fire') NOT NULL, `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`chapter_id`, `user_id`), FOREIGN KEY (`chapter_id`) REFERENCES `chapters`(`id`) ON DELETE CASCADE, FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE );
+);

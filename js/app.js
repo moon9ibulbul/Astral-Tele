@@ -4,6 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.expand();
     const initData = tg.initData || '';
 
+    // Sync/Register user in database if accessing via Telegram
+    if (initData) {
+        fetch('/api/profile.php', {
+            headers: { 'Authorization': `Bearer ${initData}` }
+        }).catch(err => console.error("Error syncing user:", err));
+    }
+
     // Global state
     let currentPage = 1;
     let currentCategory = '';
