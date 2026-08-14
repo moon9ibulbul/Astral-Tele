@@ -216,12 +216,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     grid.innerHTML = comics.map(comic => `
-                        <div class="bg-white rounded-lg shadow overflow-hidden flex cursor-pointer hover:bg-gray-50" onclick="window.location.href='detail.html?id=${comic.id}'">
-                            <div class="w-2/5 aspect-[16/9] bg-gray-200 shrink-0">
+                        <div class="bg-white rounded-lg shadow overflow-hidden flex flex-col cursor-pointer relative hover:bg-gray-50" onclick="window.location.href='detail.html?id=${comic.id}'">
+                            <div class="aspect-[16/9] w-full bg-gray-200 relative shrink-0">
                                 <img src="${comic.thumbnail_url || 'https://via.placeholder.com/300x168?text=No+Image'}" alt="${comic.title}" class="w-full h-full object-cover">
                             </div>
-                            <div class="p-3 flex-1 flex flex-col justify-center">
-                                <h3 class="font-bold text-sm line-clamp-2">${escapeHTML(comic.title)}</h3>
+                            <div class="p-3 flex-1 flex flex-col">
+                                <h3 class="font-bold text-sm line-clamp-2 mb-2">${escapeHTML(comic.title)}</h3>
                             </div>
                         </div>
                     `).join('');

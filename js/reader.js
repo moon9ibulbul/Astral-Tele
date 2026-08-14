@@ -386,8 +386,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const indicator = document.getElementById('loadingIndicator');
 
         try {
+            const headers = {};
+            const tg = window.Telegram && window.Telegram.WebApp;
+            if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+
             // Load PDF document
-            const pdfDoc = await pdfjsLib.getDocument(url).promise;
+            const pdfDoc = await pdfjsLib.getDocument({ url: url, httpHeaders: headers }).promise;
             indicator.style.display = 'none';
 
             // Loop through pages and render them as a long strip
