@@ -118,7 +118,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const tg = window.Telegram && window.Telegram.WebApp;
     const headers = {};
-    if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+    if (tg && tg.initData) {
+        headers['Authorization'] = `Bearer ${tg.initData}`;
+        headers['X-Telegram-Init-Data'] = tg.initData;
+    }
 
     // Bookmark Toggle Logic
     const bookmarkBtn = document.getElementById('bookmarkBtn');
@@ -218,9 +221,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentUserId = null;
 
     // Attempt to get user ID
+    const detailProfileHeaders = {};
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+        detailProfileHeaders['Authorization'] = `Bearer ${window.Telegram.WebApp.initData}`;
+        detailProfileHeaders['X-Telegram-Init-Data'] = window.Telegram.WebApp.initData;
+    }
     fetch('/api/profile.php', {
-        headers: (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) ?
-        {'Authorization': `Bearer ${window.Telegram.WebApp.initData}`} : {}
+        headers: detailProfileHeaders
     })
     .then(res => res.ok ? res.json() : {})
     .then(data => {
@@ -246,7 +253,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Using mock headers if needed, otherwise rely on cookie/session, but our auth uses Bearer token.
             const headers = {};
             const tg = window.Telegram && window.Telegram.WebApp;
-            if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+            if (tg && tg.initData) {
+                headers['Authorization'] = `Bearer ${tg.initData}`;
+                headers['X-Telegram-Init-Data'] = tg.initData;
+            }
 
             fetch('/api/reviews.php', { method: 'POST', headers, body: fd })
                 .then(res => res.json())
@@ -281,7 +291,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const headers = {};
         const tg = window.Telegram && window.Telegram.WebApp;
-        if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+        if (tg && tg.initData) {
+            headers['Authorization'] = `Bearer ${tg.initData}`;
+            headers['X-Telegram-Init-Data'] = tg.initData;
+        }
 
         fetch('/api/reviews.php', { method: 'POST', headers, body: fd })
             .then(res => res.json())
@@ -298,7 +311,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const headers = {};
         const tg = window.Telegram && window.Telegram.WebApp;
-        if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+        if (tg && tg.initData) {
+            headers['Authorization'] = `Bearer ${tg.initData}`;
+            headers['X-Telegram-Init-Data'] = tg.initData;
+        }
 
         fetch('/api/reviews.php', { method: 'POST', headers, body: fd })
             .then(res => res.json())
@@ -443,7 +459,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const headers = {};
         const tg = window.Telegram && window.Telegram.WebApp;
-        if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+        if (tg && tg.initData) {
+            headers['Authorization'] = `Bearer ${tg.initData}`;
+            headers['X-Telegram-Init-Data'] = tg.initData;
+        }
 
         fetch('/api/reviews.php', { method: 'POST', headers, body: fd })
             .then(res => res.json())

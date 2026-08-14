@@ -3,7 +3,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tg) tg.expand();
 
     const headers = {};
-    if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+    if (tg && tg.initData) {
+        headers['Authorization'] = `Bearer ${tg.initData}`;
+        headers['X-Telegram-Init-Data'] = tg.initData;
+    }
 
     function getRankHtml(role, pts) {
         pts = parseInt(pts) || 0;

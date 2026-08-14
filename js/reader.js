@@ -21,7 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Sync/Register user in database if accessing via Telegram
     if (tg.initData) {
         fetch('/api/profile.php', {
-            headers: { 'Authorization': `Bearer ${tg.initData}` }
+            headers: {
+                'Authorization': `Bearer ${tg.initData}`,
+                'X-Telegram-Init-Data': tg.initData
+            }
         }).catch(err => console.error("Error syncing user:", err));
     }
 
@@ -37,7 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function fetchCurrentChapter() {
         const headers = {};
         const tg = window.Telegram && window.Telegram.WebApp;
-        if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+        if (tg && tg.initData) {
+            headers['Authorization'] = `Bearer ${tg.initData}`;
+            headers['X-Telegram-Init-Data'] = tg.initData;
+        }
 
         fetch(`/api/chapters.php?id=${chapterId}`, { headers })
             .then(res => res.json())
@@ -114,7 +120,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Fetch invoice
             const headers = {};
             const tg = window.Telegram && window.Telegram.WebApp;
-            if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+            if (tg && tg.initData) {
+                headers['Authorization'] = `Bearer ${tg.initData}`;
+                headers['X-Telegram-Init-Data'] = tg.initData;
+            }
 
             fetch('/api/invoice.php', { method: 'POST', headers, body: fd })
                 .then(res => res.json())
@@ -145,7 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function submitUnlock(fd) {
         const headers = {};
         const tg = window.Telegram && window.Telegram.WebApp;
-        if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+        if (tg && tg.initData) {
+            headers['Authorization'] = `Bearer ${tg.initData}`;
+            headers['X-Telegram-Init-Data'] = tg.initData;
+        }
 
         fetch('/api/unlock.php', { method: 'POST', headers, body: fd })
             .then(res => res.json())
@@ -173,7 +185,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Log to history
                 const headers = {};
                 const tg = window.Telegram && window.Telegram.WebApp;
-                if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+                if (tg && tg.initData) {
+                    headers['Authorization'] = `Bearer ${tg.initData}`;
+                    headers['X-Telegram-Init-Data'] = tg.initData;
+                }
                 const fd = new FormData();
                 fd.append('chapter_id', chapterId);
                 fetch('/api/history.php', { method: 'POST', headers, body: fd }).catch(() => {});
@@ -234,7 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.submitReaction = function(reactionType) {
         const headers = {};
         const tg = window.Telegram && window.Telegram.WebApp;
-        if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+        if (tg && tg.initData) {
+            headers['Authorization'] = `Bearer ${tg.initData}`;
+            headers['X-Telegram-Init-Data'] = tg.initData;
+        }
 
         const fd = new FormData();
         fd.append('chapter_id', chapterId);
@@ -358,7 +376,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const headers = {};
             const tg = window.Telegram && window.Telegram.WebApp;
-            if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+            if (tg && tg.initData) {
+                headers['Authorization'] = `Bearer ${tg.initData}`;
+                headers['X-Telegram-Init-Data'] = tg.initData;
+            }
 
             fetch('/api/reviews.php', { method: 'POST', headers, body: fd })
                 .then(res => res.json())
@@ -410,7 +431,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const headers = {};
             const tg = window.Telegram && window.Telegram.WebApp;
-            if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+        if (tg && tg.initData) {
+            headers['Authorization'] = `Bearer ${tg.initData}`;
+            headers['X-Telegram-Init-Data'] = tg.initData;
+        }
 
             // Load PDF document
             const pdfDoc = await pdfjsLib.getDocument({ url: url, httpHeaders: headers }).promise;
