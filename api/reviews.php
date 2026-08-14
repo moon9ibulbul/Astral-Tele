@@ -73,6 +73,14 @@ if (!$user) {
 if ($method === 'POST') {
     // Action could be 'add', 'like', 'dislike'
     $action = $_POST['action'] ?? 'add';
+
+    if ($action === 'add' || $action === 'edit') {
+        if (isset($user['is_muted']) && $user['is_muted']) {
+            http_response_code(403);
+            echo json_encode(['error' => 'You are muted and cannot post or edit comments.']);
+            exit;
+        }
+    }
     
     if ($action === 'add') {
         $comicId = $_POST['comic_id'] ?? null;

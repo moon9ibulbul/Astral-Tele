@@ -1,7 +1,29 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Restrict access to Telegram Mini App only
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (!tg || !tg.initData) {
+        document.body.innerHTML = `
+            <div class="flex items-center justify-center min-h-screen bg-gray-900 text-gray-100 p-4">
+                <div class="text-center bg-gray-800 p-8 rounded-lg shadow-lg max-w-md border border-gray-700">
+                    <div class="text-5xl mb-4">🚫</div>
+                    <h1 class="text-xl font-bold mb-2">Akses Ditolak</h1>
+                    <p class="text-sm text-gray-400">Halaman ini hanya dapat diakses melalui Telegram Mini App.</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const chapterId = urlParams.get('id');
     const comicId = urlParams.get('comic_id');
+
+    // Sync/Register user in database if accessing via Telegram
+    if (tg.initData) {
+        fetch('/api/profile.php', {
+            headers: { 'Authorization': `Bearer ${tg.initData}` }
+        }).catch(err => console.error("Error syncing user:", err));
+    }
 
     if (!chapterId || !comicId) {
         document.getElementById('loadingIndicator').innerText = "Invalid chapter or comic ID.";

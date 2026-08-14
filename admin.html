@@ -26,6 +26,7 @@
                 <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-700" data-target="commentsTab">Comments & Reviews</button>
                 <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-700" data-target="backupUpdateTab">Backup & Update</button>
                 <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-700" data-target="categoriesTab">Categories</button>
+                <button class="w-full text-left px-4 py-2 rounded hover:bg-gray-700" data-target="usersTab">Users</button>
             </nav>
             <div class="mt-auto text-xs text-gray-400">Astral-Tele Admin</div>
         </aside>
@@ -128,6 +129,36 @@
                         </tbody>
                     </table>
                 </div>
+            </section>
+
+            <!-- Users Tab -->
+            <section id="usersTab" class="tab-content hidden">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-bold">Manage Users</h2>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <input type="text" id="adminUserSearch" placeholder="Search users..." class="border rounded px-4 py-2 flex-1 md:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button id="searchUsersBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 whitespace-nowrap">Search</button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 border-b">
+                                <th class="p-3">ID</th>
+                                <th class="p-3">Avatar</th>
+                                <th class="p-3">Username</th>
+                                <th class="p-3">Name</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUsersList">
+                            <tr><td colspan="6" class="p-3 text-center text-gray-500">Loading users...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination for Users -->
+                <div class="flex justify-center mt-6 gap-2" id="adminUserPagination"></div>
             </section>
 
             <!-- Categories Tab -->
