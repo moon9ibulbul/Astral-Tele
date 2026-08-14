@@ -3,8 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.expand();
     const initData = tg.initData;
 
-    // Simple mock auth bypass for local testing if not in Telegram (for demonstration purposes)
-    const mockAuth = true; 
+    // Allow mock bypass only on local development (localhost)
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const mockAuth = isLocalhost;
     let headers = {};
 
     let currentAdminChapterPage = 1;
@@ -28,12 +29,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function authenticate() {
-        // A real app might hit a /api/auth.php endpoint to verify and check role
-        // For now, we attach headers to all API calls. 
-        // If API calls fail with 401/403, we know auth failed.
-        document.getElementById('authGate').classList.add('hidden');
-        document.getElementById('adminPanel').classList.remove('hidden');
-        initAdminPanel();
+        fetch('/api/profile.php', { headers })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error("Unauthorized access. Status: " + res.status);
+                }
+                return res.json();
+            })
+            .then(user => {
+                if (user && user.role === 'admin') {
+                    document.getElementById('authGate').classList.add('hidden');
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                    initAdminPanel();
+                } else {
+                    throw new Error("Access denied. You are not an administrator.");
+                }
+            })
+            .catch(err => {
+                document.getElementById('authError').innerText = err.message;
+                document.getElementById('authError').classList.remove('hidden');
+            });
     }
 
     function initAdminPanel() {

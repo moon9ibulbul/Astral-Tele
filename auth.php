@@ -49,8 +49,17 @@ function syncUser($userData) {
     }
 
     if ($existingUser) {
+        $existingDetailsStmt = $db->prepare("SELECT first_name, last_name, username, photo_url FROM users WHERE id = ?");
+        $existingDetailsStmt->execute([$userData['id']]);
+        $details = $existingDetailsStmt->fetch();
+
+        $newFirstName = !empty($firstName) ? $firstName : ($details['first_name'] ?? '');
+        $newLastName = !empty($lastName) ? $lastName : ($details['last_name'] ?? '');
+        $newUsername = !empty($username) ? $username : ($details['username'] ?? '');
+        $newPhotoUrl = !empty($photoUrl) ? $photoUrl : ($details['photo_url'] ?? '');
+
         $updateStmt = $db->prepare("UPDATE users SET first_name = ?, last_name = ?, username = ?, photo_url = ? WHERE id = ?");
-        $updateStmt->execute([$firstName, $lastName, $username, $photoUrl, $userData['id']]);
+        $updateStmt->execute([$newFirstName, $newLastName, $newUsername, $newPhotoUrl, $userData['id']]);
 
         $role = $existingUser['role'];
         if ($isAdmin && $existingUser['role'] !== 'admin') {
@@ -84,21 +93,41 @@ function getAuthenticatedUser() {
         return ['id' => 1, 'role' => 'admin', 'is_banned' => 0, 'is_muted' => 0];
     }
 
-    $headers = getallheaders();
-    if (isset($headers['Authorization'])) {
-        $authHeader = $headers['Authorization'];
-        if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-            $initData = $matches[1];
-            $telegramUser = validateTelegramInitData($initData);
-            if ($telegramUser) {
-                $user = syncUser($telegramUser);
-                if ($user && isset($user['is_banned']) && $user['is_banned']) {
-                    http_response_code(403);
-                    echo json_encode(['error' => 'Your account has been banned.']);
-                    exit;
+    $authHeader = null;
+
+    // Check if getallheaders() exists and use it
+    if (function_exists('getallheaders')) {
+        $headers = getallheaders();
+        if ($headers) {
+            foreach ($headers as $name => $value) {
+                if (strtolower($name) === 'authorization') {
+                    $authHeader = $value;
+                    break;
                 }
-                return $user;
             }
+        }
+    }
+
+    // Fallback to $_SERVER variables
+    if (!$authHeader) {
+        if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+        } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        }
+    }
+
+    if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+        $initData = $matches[1];
+        $telegramUser = validateTelegramInitData($initData);
+        if ($telegramUser) {
+            $user = syncUser($telegramUser);
+            if ($user && isset($user['is_banned']) && $user['is_banned']) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Your account has been banned.']);
+                exit;
+            }
+            return $user;
         }
     }
     return null;
