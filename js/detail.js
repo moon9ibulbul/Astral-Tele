@@ -232,7 +232,10 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .then(res => res.ok ? res.json() : {})
     .then(data => {
-        if(data.id) currentUserId = data.id;
+        if(data.id) {
+            currentUserId = data.id;
+            loadReviews();
+        }
     }).catch(() => {});
 
     const submitReviewBtn = document.getElementById('submitReviewBtn');
@@ -416,7 +419,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <button class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700" onclick="submitReply(${thread.id})">Send</button>
                             </div>
                         </div>
-                    </div>
                     `;
                     }).join('');
                 }
