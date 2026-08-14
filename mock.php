@@ -1,10 +1,47 @@
 <?php
-require 'db.php';
+require_once __DIR__ . '/db.php';
 $db = getDbConnection();
 
+// Check if tables are fully initialized (e.g. check if comics table exists)
+try {
+    $stmt = $db->query("SELECT 1 FROM `comics` LIMIT 1");
+} catch (\PDOException $e) {
+    // Comics table doesn't exist, let's initialize the database schema from schema.sql
+    echo "Comics table not found. Initializing database schema from schema.sql...\n";
+    $schemaFile = __DIR__ . '/schema.sql';
+    if (!file_exists($schemaFile)) {
+        die("Error: schema.sql file not found in " . __DIR__ . "\n");
+    }
+
+    $sql = file_get_contents($schemaFile);
+    if ($sql === false) {
+        die("Error: Could not read schema.sql\n");
+    }
+
+    try {
+        $db->exec($sql);
+        echo "Database schema successfully initialized.\n";
+    } catch (\PDOException $schemaException) {
+        die("Error executing schema.sql: " . $schemaException->getMessage() . "\n");
+    }
+}
+
 // Create users table if not exists just in case (schema should have done it)
-$db->exec("CREATE TABLE IF NOT EXISTS `users` (`id` BIGINT PRIMARY KEY, `role` VARCHAR(255) DEFAULT 'user')");
-$db->exec("INSERT IGNORE INTO users (id, role) VALUES (1, 'admin')");
+$db->exec("CREATE TABLE IF NOT EXISTS `users` (
+    `id` BIGINT PRIMARY KEY,
+    `username` VARCHAR(255) NULL UNIQUE,
+    `first_name` VARCHAR(255) NULL,
+    `last_name` VARCHAR(255) NULL,
+    `photo_url` TEXT NULL,
+    `role` ENUM('user', 'admin') DEFAULT 'user',
+    `is_banned` TINYINT(1) DEFAULT 0,
+    `is_muted` TINYINT(1) DEFAULT 0,
+    `pts` INT DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)");
+
+$db->exec("INSERT IGNORE INTO users (id, role, username, first_name) VALUES (1, 'admin', 'admin', 'Admin')");
 
 // Create comic
 $db->exec("INSERT INTO comics (id, title) VALUES (1, 'Test Comic') ON DUPLICATE KEY UPDATE title='Test Comic'");
