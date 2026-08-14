@@ -1,6 +1,11 @@
 <?php
 
 $config = [
+    'app' => [
+        'title' => 'Astral-Tele',
+        'url' => 'http://localhost:8000',
+        'admin_id' => 'YOUR_TELEGRAM_USER_ID'
+    ],
     'db' => [
         'host' => '127.0.0.1',
         'dbname' => 'astral_tele',
