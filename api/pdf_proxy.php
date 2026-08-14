@@ -53,6 +53,7 @@ if (!$authorized) {
 function extractS3KeyProxy($url) {
     global $config;
     $path = parse_url($url, PHP_URL_PATH);
+    $path = rawurldecode($path);
     $bucketPrefix = '/' . $config['s3']['bucket'] . '/';
     if (strpos($path, $bucketPrefix) === 0) {
         return substr($path, strlen($bucketPrefix));
@@ -60,7 +61,7 @@ function extractS3KeyProxy($url) {
     if (strpos($path, '/pdfs/') !== false) {
         return substr($path, strpos($path, '/pdfs/') + 1);
     }
-    return $url;
+    return rawurldecode($url);
 }
 
 $key = extractS3KeyProxy($chapter['pdf_url']);
