@@ -3,7 +3,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tg) tg.expand();
 
     const headers = {};
-    if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+    if (tg && tg.initData) {
+        headers['Authorization'] = `Bearer ${tg.initData}`;
+        headers['X-Telegram-Init-Data'] = tg.initData;
+    }
 
     const profileImg = document.getElementById('profileImg');
     const usernameDisplay = document.getElementById('usernameDisplay');

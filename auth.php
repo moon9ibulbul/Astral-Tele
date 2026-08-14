@@ -79,38 +79,92 @@ function syncUser($userData) {
 }
 
 function getAuthorizationHeader() {
-    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
-        return $_SERVER['HTTP_AUTHORIZATION'];
+    // List of keys to check for Bearer or raw initialization data in Server environment variables
+    $headers_to_check = [
+        'HTTP_AUTHORIZATION',
+        'REDIRECT_HTTP_AUTHORIZATION',
+        'HTTP_X_TELEGRAM_INIT_DATA',
+        'HTTP_X_TG_INIT_DATA',
+        'X-Telegram-Init-Data',
+        'X-Tg-Init-Data'
+    ];
+
+    foreach ($headers_to_check as $key) {
+        if (!empty($_SERVER[$key])) {
+            return $_SERVER[$key];
+        }
     }
-    if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
-        return $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
-    }
+
     if (function_exists('getallheaders')) {
         $headers = getallheaders();
         if ($headers) {
             foreach ($headers as $key => $value) {
-                if (strcasecmp($key, 'Authorization') === 0) {
+                if (
+                    strcasecmp($key, 'Authorization') === 0 ||
+                    strcasecmp($key, 'X-Telegram-Init-Data') === 0 ||
+                    strcasecmp($key, 'X-Tg-Init-Data') === 0
+                ) {
                     return $value;
                 }
             }
         }
     }
+
     if (function_exists('apache_request_headers')) {
         $headers = apache_request_headers();
         if ($headers) {
             foreach ($headers as $key => $value) {
-                if (strcasecmp($key, 'Authorization') === 0) {
+                if (
+                    strcasecmp($key, 'Authorization') === 0 ||
+                    strcasecmp($key, 'X-Telegram-Init-Data') === 0 ||
+                    strcasecmp($key, 'X-Tg-Init-Data') === 0
+                ) {
                     return $value;
                 }
             }
         }
     }
+
+    // Check raw query string / post parameter fallbacks
+    if (!empty($_GET['initData'])) {
+        return $_GET['initData'];
+    }
+    if (!empty($_POST['initData'])) {
+        return $_POST['initData'];
+    }
+
     return null;
 }
 
 function getAuthenticatedUser() {
-    // For local testing purposes where we can't easily fake Telegram initData
-    // We bypass authentication if running locally (cli-server SAPI, localhost, or 127.0.0.1)
+    global $config;
+
+    $authHeader = getAuthorizationHeader();
+    $initData = null;
+
+    if ($authHeader) {
+        if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+            $initData = $matches[1];
+        } else {
+            // Raw string (e.g. sent directly via custom headers or GET/POST fallback)
+            $initData = $authHeader;
+        }
+    }
+
+    if ($initData) {
+        $telegramUser = validateTelegramInitData($initData);
+        if ($telegramUser) {
+            $user = syncUser($telegramUser);
+            if ($user && isset($user['is_banned']) && $user['is_banned']) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Your account has been banned.']);
+                exit;
+            }
+            return $user;
+        }
+    }
+
+    // Fallback to local / debug bypass ONLY if Telegram signature check fails/absent
     $serverName = $_SERVER['SERVER_NAME'] ?? '';
     $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '';
     $isLocal = (
@@ -121,25 +175,11 @@ function getAuthenticatedUser() {
         $remoteAddr === '::1'
     );
 
-    if ($isLocal) {
+    $isDebug = isset($config['app']['debug']) && $config['app']['debug'] === true;
+
+    if ($isLocal || $isDebug) {
         return ['id' => 1, 'role' => 'admin', 'is_banned' => 0, 'is_muted' => 0];
     }
 
-    $authHeader = getAuthorizationHeader();
-    if ($authHeader) {
-        if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-            $initData = $matches[1];
-            $telegramUser = validateTelegramInitData($initData);
-            if ($telegramUser) {
-                $user = syncUser($telegramUser);
-                if ($user && isset($user['is_banned']) && $user['is_banned']) {
-                    http_response_code(403);
-                    echo json_encode(['error' => 'Your account has been banned.']);
-                    exit;
-                }
-                return $user;
-            }
-        }
-    }
     return null;
 }

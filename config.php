@@ -1,6 +1,12 @@
 <?php
 
 $config = [
+    'app' => [
+        'title' => 'Astral-Tele',
+        'url' => 'http://localhost:8000',
+        'admin_id' => '1',
+        'debug' => true // Set to false in production to enforce Telegram Mini App environments only
+    ],
     'db' => [
         'host' => '127.0.0.1',
         'dbname' => 'astral_tele',

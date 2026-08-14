@@ -58,7 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (paginationControls) paginationControls.innerHTML = '';
 
         const headers = {};
-        if (tg && tg.initData) headers['Authorization'] = `Bearer ${tg.initData}`;
+        if (tg && tg.initData) {
+            headers['Authorization'] = `Bearer ${tg.initData}`;
+            headers['X-Telegram-Init-Data'] = tg.initData;
+        }
 
         fetch(`/api/library.php?tab=${currentTab}&page=${currentPage}`, { headers })
             .then(res => res.json())

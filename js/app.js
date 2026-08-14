@@ -7,7 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Sync/Register user in database if accessing via Telegram
     if (initData) {
         fetch('/api/profile.php', {
-            headers: { 'Authorization': `Bearer ${initData}` }
+            headers: {
+                'Authorization': `Bearer ${initData}`,
+                'X-Telegram-Init-Data': initData
+            }
         }).catch(err => console.error("Error syncing user:", err));
     }
 
