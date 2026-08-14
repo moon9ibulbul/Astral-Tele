@@ -34,7 +34,9 @@ if ($method === 'GET') {
         if ($chapter) {
             $chapter['locked'] = false;
             $chapter['has_password'] = !empty($chapter['password']);
+            $hasPdfPassword = !empty($chapter['pdf_password']);
             unset($chapter['password']); // Never expose password hash/plaintext
+            unset($chapter['pdf_password']); // Never expose
 
             $needsUnlock = false;
             if ($chapter['has_password'] || $chapter['price'] > 0) {
@@ -54,9 +56,13 @@ if ($method === 'GET') {
                 $chapter['locked'] = true;
                 $chapter['pdf_url'] = null; // Do not expose PDF url if locked
             } else {
-                // Generate presigned URL
-                $key = extractS3Key($chapter['pdf_url']);
-                $chapter['pdf_url'] = getPresignedUrl($key);
+                if ($hasPdfPassword) {
+                    $chapter['pdf_url'] = '/api/pdf_proxy.php?id=' . $chapterId;
+                } else {
+                    // Generate presigned URL
+                    $key = extractS3Key($chapter['pdf_url']);
+                    $chapter['pdf_url'] = getPresignedUrl($key);
+                }
             }
             echo json_encode($chapter);
         } else {
@@ -130,6 +136,7 @@ if ($method === 'POST') {
     $title = $_POST['title'] ?? '';
     $isAdult = isset($_POST['is_adult']) && $_POST['is_adult'] === '1' ? 1 : 0;
     $password = !empty($_POST['password']) ? $_POST['password'] : null;
+    $pdfPassword = !empty($_POST['pdf_password']) ? $_POST['pdf_password'] : null;
     $price = isset($_POST['price']) ? (int)$_POST['price'] : 0;
 
     if (!$comicId || !$chapterNumber) {
@@ -147,6 +154,16 @@ if ($method === 'POST') {
     if (isset($_FILES['pdf']) && $_FILES['pdf']['error'] === UPLOAD_ERR_OK) {
         $tmpName = $_FILES['pdf']['tmp_name'];
         $fileName = 'pdfs/' . time() . '_' . $_FILES['pdf']['name'];
+
+        if (!empty($pdfPassword)) {
+            // Encrypt PDF if pdf_password is set
+            $pdfContent = file_get_contents($tmpName);
+            $key = hash('sha256', $pdfPassword, true);
+            $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
+            $encryptedContent = openssl_encrypt($pdfContent, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+            file_put_contents($tmpName, $iv . $encryptedContent);
+        }
+
         $pdfUrl = uploadToS3($tmpName, $fileName);
         if (!$pdfUrl) {
             http_response_code(400);
@@ -164,12 +181,21 @@ if ($method === 'POST') {
     }
 
     if ($existing) {
-        $stmt = $db->prepare("UPDATE chapters SET pdf_url = ?, title = ?, is_adult = ?, password = ?, price = ? WHERE id = ?");
-        $stmt->execute([$pdfUrl, $title, $isAdult, $password, $price, $existing['id']]);
+        // Only update pdf_password if it's explicitly provided, otherwise keep existing
+        $pdfPasswordToUpdate = $pdfPassword;
+        if (empty($pdfPassword)) {
+            $existingDataStmt = $db->prepare("SELECT pdf_password FROM chapters WHERE id = ?");
+            $existingDataStmt->execute([$existing['id']]);
+            $existingData = $existingDataStmt->fetch();
+            $pdfPasswordToUpdate = $existingData['pdf_password'];
+        }
+
+        $stmt = $db->prepare("UPDATE chapters SET pdf_url = ?, title = ?, is_adult = ?, password = ?, pdf_password = ?, price = ? WHERE id = ?");
+        $stmt->execute([$pdfUrl, $title, $isAdult, $password, $pdfPasswordToUpdate, $price, $existing['id']]);
         echo json_encode(['success' => true, 'id' => $existing['id'], 'action' => 'reupload']);
     } else {
-        $stmt = $db->prepare("INSERT INTO chapters (comic_id, chapter_number, title, pdf_url, is_adult, password, price) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$comicId, $chapterNumber, $title, $pdfUrl, $isAdult, $password, $price]);
+        $stmt = $db->prepare("INSERT INTO chapters (comic_id, chapter_number, title, pdf_url, is_adult, password, pdf_password, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$comicId, $chapterNumber, $title, $pdfUrl, $isAdult, $password, $pdfPassword, $price]);
         echo json_encode(['success' => true, 'id' => $db->lastInsertId(), 'action' => 'upload']);
     }
     exit;
