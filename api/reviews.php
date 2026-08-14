@@ -25,7 +25,7 @@ if ($method === 'GET') {
 
     if ($isAdmin) {
         $stmt = $db->prepare("
-            SELECT r.*, u.username, u.photo_url 
+            SELECT r.*, u.username, u.photo_url, u.role, u.pts
             FROM reviews r 
             JOIN users u ON r.user_id = u.id 
             WHERE r.comic_id = ?
@@ -33,7 +33,7 @@ if ($method === 'GET') {
         ");
     } else {
         $stmt = $db->prepare("
-            SELECT r.*, u.username, u.photo_url 
+            SELECT r.*, u.username, u.photo_url, u.role, u.pts
             FROM reviews r 
             JOIN users u ON r.user_id = u.id 
             WHERE r.comic_id = ? AND r.status = 'active'
