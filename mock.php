@@ -43,8 +43,19 @@ $db->exec("CREATE TABLE IF NOT EXISTS `users` (
 
 $db->exec("INSERT IGNORE INTO users (id, role, username, first_name) VALUES (1, 'admin', 'admin', 'Admin')");
 
+// Create categories
+$categories = ['Action', 'Adventure', 'Fantasy', 'Comedy', 'Romance'];
+$catStmt = $db->prepare("INSERT INTO categories (id, name) VALUES (?, ?) ON DUPLICATE KEY UPDATE name=VALUES(name)");
+foreach ($categories as $index => $catName) {
+    $catStmt->execute([$index + 1, $catName]);
+}
+
 // Create comic
-$db->exec("INSERT INTO comics (id, title) VALUES (1, 'Test Comic') ON DUPLICATE KEY UPDATE title='Test Comic'");
+$db->exec("INSERT INTO comics (id, title, thumbnail_url, synopsis, status) VALUES (1, 'Test Comic', 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=300', 'This is a sample test comic synopsis.', 'Ongoing') ON DUPLICATE KEY UPDATE title='Test Comic', thumbnail_url='https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=300', synopsis='This is a sample test comic synopsis.', status='Ongoing'");
+
+// Link comic with categories
+$db->exec("INSERT IGNORE INTO comic_categories (comic_id, category_id) VALUES (1, 1)");
+$db->exec("INSERT IGNORE INTO comic_categories (comic_id, category_id) VALUES (1, 3)");
 
 // Create chapters
 $db->exec("INSERT INTO chapters (id, comic_id, chapter_number, title, pdf_url, is_adult, password, price) VALUES (1, 1, 1.0, 'Adult Chapter', 'dummy.pdf', 1, NULL, 0) ON DUPLICATE KEY UPDATE title='Adult Chapter'");

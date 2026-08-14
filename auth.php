@@ -110,7 +110,18 @@ function getAuthorizationHeader() {
 
 function getAuthenticatedUser() {
     // For local testing purposes where we can't easily fake Telegram initData
-    if (php_sapi_name() === 'cli-server') {
+    // We bypass authentication if running locally (cli-server SAPI, localhost, or 127.0.0.1)
+    $serverName = $_SERVER['SERVER_NAME'] ?? '';
+    $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '';
+    $isLocal = (
+        php_sapi_name() === 'cli-server' ||
+        $serverName === 'localhost' ||
+        $serverName === '127.0.0.1' ||
+        $remoteAddr === '127.0.0.1' ||
+        $remoteAddr === '::1'
+    );
+
+    if ($isLocal) {
         return ['id' => 1, 'role' => 'admin', 'is_banned' => 0, 'is_muted' => 0];
     }
 

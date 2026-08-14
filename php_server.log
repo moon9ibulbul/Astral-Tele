@@ -1,7 +1,0 @@
-[Fri Aug 14 08:54:51 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
-[Fri Aug 14 08:55:24 2026] [::1]:47390 Accepted
-[Fri Aug 14 08:55:24 2026] [::1]:47390 [200]: GET /api/profile.php
-[Fri Aug 14 08:55:24 2026] [::1]:47390 Closing
-[Fri Aug 14 08:55:51 2026] [::1]:46330 Accepted
-[Fri Aug 14 08:55:51 2026] [::1]:46330 [200]: GET /api/comics.php
-[Fri Aug 14 08:55:51 2026] [::1]:46330 Closing
