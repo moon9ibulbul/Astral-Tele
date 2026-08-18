@@ -8,8 +8,10 @@ $method = $_SERVER['REQUEST_METHOD'];
 $db = getDbConnection();
 
 function extractS3Key($url) {
+    if (empty($url)) return $url;
     global $config;
     $path = parse_url($url, PHP_URL_PATH);
+    $path = rawurldecode((string)$path);
     $bucketPrefix = '/' . $config['s3']['bucket'] . '/';
     if (strpos($path, $bucketPrefix) === 0) {
         return substr($path, strlen($bucketPrefix));
@@ -18,7 +20,7 @@ function extractS3Key($url) {
     if (strpos($path, '/pdfs/') !== false) {
         return substr($path, strpos($path, '/pdfs/') + 1);
     }
-    return $url; // Fallback
+    return rawurldecode($url); // Fallback
 }
 
 if ($method === 'GET') {
